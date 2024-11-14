@@ -76,3 +76,17 @@ type RestaurantsRequest struct {
 	Latitude    float64 `json:"latitude"`
 	Longitude   float64 `json:"longitude"`
 }
+
+type DishRequest struct {
+	Name  string `json:"name"`
+	Price int    `json:"price"`
+}
+
+type Dish struct {
+	DishId       string  `json:"dishId"`
+	Name         string  `json:"name"`
+	Price        int     `json:"price"`
+	RestaurantId string  `json:"restaurantId"`
+	CreatedAt    string  `json:"createdAt"`
+	ArchivedAt   *string `json:"arcivedAt"`
+}

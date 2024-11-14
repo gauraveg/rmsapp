@@ -7,6 +7,7 @@ import (
 	"github.com/gauraveg/rmsapp/middlewares"
 	"github.com/gauraveg/rmsapp/models"
 	"github.com/gauraveg/rmsapp/utils"
+	"github.com/go-chi/chi/v5"
 )
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -83,4 +84,39 @@ func CreateRestaurent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ResponseWithJson(w, http.StatusCreated, restaurent)
+}
+
+func CreateDish(w http.ResponseWriter, r *http.Request) {
+	var payload models.DishRequest
+	restaurantId := chi.URLParam(r, "restaurantId")
+
+	err := utils.ParsePayload(r.Body, &payload)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusBadRequest, err, err.Error())
+		return
+	}
+
+	exist, err := dbHelper.IsDishExists(payload.Name, restaurantId)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding dishes")
+		return
+	}
+	if exist {
+		utils.ResponseWithError(w, http.StatusConflict, nil, "Dish Already Exists")
+	}
+
+	dishId, resEr := dbHelper.CreateDishHelper(payload.Name, payload.Price, restaurantId)
+	if resEr != nil {
+		utils.ResponseWithError(w, http.StatusInternalServerError, resEr, "Failed to add new Restaurent")
+		return
+	}
+
+	var dish models.Dish
+	dish, dishEr := dbHelper.GetDishById(dishId)
+	if dishEr != nil {
+		utils.ResponseWithError(w, http.StatusInternalServerError, dishEr, "Failed to create and fetch restaurent data")
+		return
+	}
+
+	utils.ResponseWithJson(w, http.StatusCreated, dish)
 }

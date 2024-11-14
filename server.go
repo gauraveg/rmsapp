@@ -45,6 +45,10 @@ func RmsRouters() *Server {
 				admin.Get("/get-users", handlers.GetUsersByAdmin)
 				admin.Post("/create-restaurent", handlers.CreateRestaurent)
 				admin.Get("/get-restaurents", handlers.GetRestaurentsByAdmin)
+				admin.Route("/{restaurantId}", func(restId chi.Router) {
+					restId.Post("/create-dish", handlers.CreateDish)
+				})
+				admin.Get("/get-all-dishes", handlers.GetAllDishesByAdmin)
 			})
 
 			router.Route("/sub-admin", func(subadmin chi.Router) {
@@ -53,6 +57,10 @@ func RmsRouters() *Server {
 				subadmin.Get("/get-users", handlers.GetUsersBySubAdmin)
 				subadmin.Post("/create-restaurent", handlers.CreateRestaurent)
 				subadmin.Get("/get-restaurents", handlers.GetRestaurentsBySubAdmin)
+				subadmin.Route("/{restaurantId}", func(restId chi.Router) {
+					restId.Post("/create-dish", handlers.CreateDish)
+				})
+				subadmin.Get("/get-all-dishes", handlers.GetAllDishesBySubAdmin)
 			})
 		})
 	})

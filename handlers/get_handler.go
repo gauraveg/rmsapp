@@ -89,12 +89,43 @@ func GetRestaurentsBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	createdBy := userctx.UserID
 	restaurents, err := dbHelper.GetRestaurentSubAdminHelper(createdBy)
 	if err != nil {
-		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch sub admin user")
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurants")
 		return
 	}
 
 	if len(restaurents) > 0 {
 		utils.ResponseWithJson(w, http.StatusCreated, restaurents)
+	} else {
+		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responsebody": "No record found"})
+	}
+}
+
+func GetAllDishesByAdmin(w http.ResponseWriter, r *http.Request) {
+	dishes, err := dbHelper.GetAllDishHelper()
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
+		return
+	}
+
+	if len(dishes) > 0 {
+		utils.ResponseWithJson(w, http.StatusCreated, dishes)
+	} else {
+		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responsebody": "No record found"})
+	}
+}
+
+func GetAllDishesBySubAdmin(w http.ResponseWriter, r *http.Request) {
+	userctx := middlewares.UserContext(r)
+	createdBy := userctx.UserID
+
+	dishes, err := dbHelper.GetAllDishSubAdminHelper(createdBy)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
+		return
+	}
+
+	if len(dishes) > 0 {
+		utils.ResponseWithJson(w, http.StatusCreated, dishes)
 	} else {
 		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responsebody": "No record found"})
 	}
