@@ -1,6 +1,7 @@
 package dbHelper
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gauraveg/rmsapp/database"
@@ -80,7 +81,8 @@ func CreateUserHelper(email, name, hashpwd, createdby, role string, address []mo
 					values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning userid;`
 
 	crtErr := database.RmsDB.Get(&userId, sqlQuery, uuid.New(), name, email, hashpwd, role, createdby, time.Now(), createdby, time.Now())
-	if crtErr == nil {
+
+	if crtErr == nil && strings.EqualFold(role, "user") {
 		sqlQuery = `insert into public.address (addressid, addressline, latitude, longitude, user_id, createdat) 
 						values ($1, $2, $3, $4, $5, $6) returning addressid;`
 
@@ -92,15 +94,22 @@ func CreateUserHelper(email, name, hashpwd, createdby, role string, address []mo
 	return userId.String(), crtErr
 }
 
-func GetUsersByAdminHelper() ([]models.User, error) {
+// Fetch Users
+func GetUsersHelper(role string) ([]models.User, error) {
 	sqlquery := `select userid, name, email, role, createdby, createdat, updatedby, updatedat, archivedat 
-					from public.users where role='user' and archivedat is null`
+					from public.users where role=$1 and archivedat is null`
 	userdata := make([]models.User, 0)
-	err := database.RmsDB.Select(&userdata, sqlquery)
+	err := database.RmsDB.Select(&userdata, sqlquery, role)
 
+	return userdata, err
+}
+
+// Fetch Address
+func GetAddressForUser(userdata []models.User) ([]models.User, error) {
 	sqlqueryaddress := `select addressid, addressline, latitude, longitude, user_id, createdat, archivedat 
 							from public.address where user_id=$1`
 
+	var err error
 	for i := range userdata {
 		addressdata := make([]models.AddressData, 0)
 		err = database.RmsDB.Select(&addressdata, sqlqueryaddress, userdata[i].UserID)

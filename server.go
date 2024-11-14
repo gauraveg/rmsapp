@@ -39,10 +39,12 @@ func RmsRouters() *Server {
 
 			router.Route("/admin", func(admin chi.Router) {
 				admin.Use(middlewares.ShouldHaveRole("admin"))
-				admin.Post("/create-sub-admin", handlers.CreateSubAdmin)
+				admin.Post("/create-sub-admin", handlers.CreateUser)
 				admin.Get("/get-sub-admins", handlers.GetSubAdmins)
 				admin.Post("/create-user", handlers.CreateUser)
 				admin.Get("/get-users", handlers.GetUsersByAdmin)
+				admin.Post("/create-restaurent", handlers.CreateRestaurent)
+				admin.Get("/get-restaurents", handlers.GetRestaurentsByAdmin)
 			})
 		})
 	})

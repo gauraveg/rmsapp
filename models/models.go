@@ -45,15 +45,34 @@ type UserData struct {
 	Name     string        `json:"name" validate:"required"`
 	Email    string        `json:"email" validate:"email"`
 	Password string        `json:"password" validate:"gte=6,lte=15"`
+	Role     string        `json:"role"`
 	Address  []AddressData `json:"address"`
 }
 
 type AddressData struct {
-	AddressId   *string  `json:"addressid"`
+	AddressId   *string  `json:"addressId"`
 	AddressLine string   `json:"addressline" validate:"required"`
 	Latitude    *float64 `json:"latitude" validate:"required"`
 	Longitude   *float64 `json:"longitude" validate:"required"`
-	UserId      *string  `json:"user_id"`
+	User_Id     *string  `json:"user_id"`
 	CreatedAt   *string  `json:"createdat"`
 	ArchivedAt  *string  `json:"archivedat"`
+}
+
+type Restaurant struct {
+	RestaurantId string  `json:"restaurantId"`
+	Name         string  `json:"name"`
+	AddressLine  string  `json:"addressline"`
+	Latitude     float64 `json:"latitude"`
+	Longitude    float64 `json:"longitude"`
+	CreatedBy    string  `json:"createdBy"`
+	CreatedAt    string  `json:"createdAt"`
+	ArchivedAt   *string `json:"arcivedAt"`
+}
+
+type RestaurantsRequest struct {
+	Name        string  `json:"name"`
+	AddressLine string  `json:"addressline"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
 }

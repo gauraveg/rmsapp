@@ -30,9 +30,9 @@ func main() {
 		return
 	}
 
-	// err = database.ShutdownDatabase()
-	// if err != nil {
-	// 	log.Printf("failed to close database connection \n %v", err)
-	// 	return
-	// }
+	err = database.ShutdownDatabase()
+	if err != nil {
+		log.Printf("failed to close database connection \n %v", err)
+		return
+	}
 }
