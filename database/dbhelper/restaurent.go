@@ -45,3 +45,12 @@ func GetRestaurentHelper() ([]models.Restaurant, error) {
 
 	return restdata, err
 }
+
+func GetRestaurentSubAdminHelper(createdBy string) ([]models.Restaurant, error) {
+	sqlquery := `select restaurantid, name, addressline, latitude, longitude, createdby, createdat, archivedat 
+					from public.restaurants where createdby=$1 and archivedat is null`
+	restdata := make([]models.Restaurant, 0)
+	err := database.RmsDB.Select(&restdata, sqlquery, createdBy)
+
+	return restdata, err
+}

@@ -46,6 +46,14 @@ func RmsRouters() *Server {
 				admin.Post("/create-restaurent", handlers.CreateRestaurent)
 				admin.Get("/get-restaurents", handlers.GetRestaurentsByAdmin)
 			})
+
+			router.Route("/sub-admin", func(subadmin chi.Router) {
+				subadmin.Use(middlewares.ShouldHaveRole("sub-admin"))
+				subadmin.Post("/create-user", handlers.CreateUser)
+				subadmin.Get("/get-users", handlers.GetUsersBySubAdmin)
+				subadmin.Post("/create-restaurent", handlers.CreateRestaurent)
+				subadmin.Get("/get-restaurents", handlers.GetRestaurentsBySubAdmin)
+			})
 		})
 	})
 

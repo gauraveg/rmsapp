@@ -118,3 +118,12 @@ func GetAddressForUser(userdata []models.User) ([]models.User, error) {
 
 	return userdata, err
 }
+
+func GetUsersSubAdminHelper(role, createdBy string) ([]models.User, error) {
+	sqlquery := `select userid, name, email, role, createdby, createdat, updatedby, updatedat, archivedat 
+					from public.users where role=$1 and createdby=$2 and archivedat is null`
+	userdata := make([]models.User, 0)
+	err := database.RmsDB.Select(&userdata, sqlquery, role, createdBy)
+
+	return userdata, err
+}
