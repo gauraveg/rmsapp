@@ -46,7 +46,7 @@ func ParsePayload(body io.Reader, out interface{}) error {
 }
 
 func HashingPwd(pwd string) string {
-	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.MinCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println(err)
 	}
@@ -54,8 +54,9 @@ func HashingPwd(pwd string) string {
 	return string(hash)
 }
 
-func CheckPassword(password, hashedPassword string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+func VerifyPwdHash(pwd string, userPwdHash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(userPwdHash), []byte(pwd))
+	return err == nil
 }
 
 func GenerateJwt(userId, role, sessionId string) (string, error) {

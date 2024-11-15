@@ -11,7 +11,7 @@ type SessionToken struct {
 }
 
 type LoginData struct {
-	UserID       string `db:"userid"`
+	UserID       string `db:"id"`
 	PasswordHash string `db:"password"`
 	Role         string `db:"role"`
 }
@@ -20,17 +20,18 @@ type UserCtx struct {
 	UserID    string `json:"userId"`
 	SessionID string `json:"sessionId"`
 	Role      string `json:"role"`
+	Email     string `json:"email"`
 }
 
 type User struct {
-	UserID     string        `json:"userId"`
+	ID         string        `json:"id"`
 	Name       string        `json:"name"`
 	Role       string        `json:"role"`
 	Email      string        `json:"email"`
 	Address    []AddressData `json:"address"`
 	CreatedBy  string        `json:"createdBy"`
 	CreatedAt  string        `json:"createdAt"`
-	Updatedby  string        `json:"updatedBy"`
+	UpdatedBy  string        `json:"updatedBy"`
 	UpdatedAt  string        `json:"updatedAt"`
 	ArchivedAt *string       `json:"archivedAt"`
 }
@@ -42,39 +43,39 @@ type SubAdminRequest struct {
 }
 
 type UserData struct {
-	Name     string        `json:"name" validate:"required"`
-	Email    string        `json:"email" validate:"email"`
-	Password string        `json:"password" validate:"gte=6,lte=15"`
-	Role     string        `json:"role"`
-	Address  []AddressData `json:"address"`
+	Name      string        `json:"name" validate:"required"`
+	Email     string        `json:"email" validate:"email"`
+	Password  string        `json:"password" validate:"gte=6,lte=15"`
+	Role      string        `json:"role"`
+	Addresses []AddressData `json:"addresses"`
 }
 
 type AddressData struct {
-	AddressId   *string  `json:"addressId"`
-	AddressLine string   `json:"addressline" validate:"required"`
-	Latitude    *float64 `json:"latitude" validate:"required"`
-	Longitude   *float64 `json:"longitude" validate:"required"`
-	User_Id     *string  `json:"user_id"`
-	CreatedAt   *string  `json:"createdat"`
-	ArchivedAt  *string  `json:"archivedat"`
+	Id         *string  `json:"id"`
+	Address    string   `json:"address" validate:"required"`
+	Latitude   *float64 `json:"latitude"`
+	Longitude  *float64 `json:"longitude"`
+	UserId     *string  `json:"userId"`
+	CreatedAt  *string  `json:"createdAt"`
+	ArchivedAt *string  `json:"archivedAt"`
 }
 
 type Restaurant struct {
-	RestaurantId string  `json:"restaurantId"`
-	Name         string  `json:"name"`
-	AddressLine  string  `json:"addressline"`
-	Latitude     float64 `json:"latitude"`
-	Longitude    float64 `json:"longitude"`
-	CreatedBy    string  `json:"createdBy"`
-	CreatedAt    string  `json:"createdAt"`
-	ArchivedAt   *string `json:"arcivedAt"`
+	Id         string  `json:"id"`
+	Name       string  `json:"name"`
+	Address    string  `json:"address"`
+	Latitude   float64 `json:"latitude"`
+	Longitude  float64 `json:"longitude"`
+	CreatedBy  string  `json:"createdBy"`
+	CreatedAt  string  `json:"createdAt"`
+	ArchivedAt *string `json:"archivedAt"`
 }
 
 type RestaurantsRequest struct {
-	Name        string  `json:"name"`
-	AddressLine string  `json:"addressline"`
-	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longitude"`
+	Name      string  `json:"name"`
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 type DishRequest struct {
@@ -83,10 +84,15 @@ type DishRequest struct {
 }
 
 type Dish struct {
-	DishId       string  `json:"dishId"`
+	Id           string  `json:"id"`
 	Name         string  `json:"name"`
 	Price        int     `json:"price"`
 	RestaurantId string  `json:"restaurantId"`
 	CreatedAt    string  `json:"createdAt"`
-	ArchivedAt   *string `json:"arcivedAt"`
+	ArchivedAt   *string `json:"archivedAt"`
+}
+
+type SessionData struct {
+	Email      string  `json:"email"`
+	ArchivedAt *string `json:"archivedAt"`
 }

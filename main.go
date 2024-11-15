@@ -11,7 +11,7 @@ import (
 
 func main() {
 	//fmt.Println("Hello World")
-	godotenv.Load()
+	godotenv.Load() // todo to explain how to get those valuue ffrom env vonfig and store it in a struct
 	dbUrl := os.Getenv("DB_URL")
 	port := os.Getenv("PORT")
 

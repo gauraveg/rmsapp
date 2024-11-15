@@ -47,8 +47,10 @@ func GetAllDishHelper() ([]models.Dish, error) {
 }
 
 func GetAllDishSubAdminHelper(createdBy string) ([]models.Dish, error) {
-	sqlquery := `select d.dishid, d.name, d.price, d.restaurantid, d.createdat from public.dishes d INNER JOIN public.restaurants r
-					on r.restaurantid = d.restaurantid where d.archivedat is null and r.createdby = $1`
+	sqlquery := `select d.dishid, d.name, d.price, d.restaurantid, d.createdat 
+					from public.dishes d INNER JOIN public.restaurants r
+					on r.restaurantid = d.restaurantid 
+					where d.archivedat is null and r.createdby = $1`
 	dishdata := make([]models.Dish, 0)
 	err := database.RmsDB.Select(&dishdata, sqlquery, createdBy)
 

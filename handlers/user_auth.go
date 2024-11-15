@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	dbHelper "github.com/gauraveg/rmsapp/database/dbhelper"
@@ -17,39 +18,39 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, role, userErr := dbHelper.GetUserInfo(payload)
+	userID, pwdHash, role, userErr := dbHelper.GetUserInfo(payload)
 	if userErr != nil {
 		utils.ResponseWithError(w, http.StatusInternalServerError, userErr, "Failed to find user")
 		return
 	}
 
-	if userID == "" || role == "" {
-		utils.ResponseWithError(w, http.StatusOK, nil, "user not found")
+	if userID == "" || utils.VerifyPwdHash(payload.Password, pwdHash) {
+		sessionID, crtErr := dbHelper.CreateUserSession(userID)
+		if crtErr != nil {
+			utils.ResponseWithError(w, http.StatusInternalServerError, crtErr, "Failed to create user session")
+			return
+		}
+
+		jwtToken, jwtErr := utils.GenerateJwt(userID, role, sessionID)
+		if jwtErr != nil {
+			utils.ResponseWithError(w, http.StatusInternalServerError, jwtErr, "Failed to generate Tokens")
+			return
+		}
+
+		utils.ResponseWithJson(w, http.StatusOK, models.SessionToken{
+			Status: "Login success",
+			Token:  jwtToken,
+		})
+	} else {
+		utils.ResponseWithError(w, http.StatusOK, errors.New("password invalid"), "Login Failed. Check email or password")
 		return
 	}
-
-	sessionID, crtErr := dbHelper.CreateUserSession(userID)
-	if crtErr != nil {
-		utils.ResponseWithError(w, http.StatusInternalServerError, crtErr, "Failed to create user session")
-		return
-	}
-
-	jwtToken, jwtErr := utils.GenerateJwt(userID, role, sessionID)
-	if jwtErr != nil {
-		utils.ResponseWithError(w, http.StatusInternalServerError, jwtErr, "Failed to generate Tokens")
-		return
-	}
-
-	utils.ResponseWithJson(w, http.StatusCreated, models.SessionToken{
-		Status: "Login success",
-		Token:  jwtToken,
-	})
 }
 
 func UserLogout(w http.ResponseWriter, r *http.Request) {
-	userctx := middlewares.UserContext(r)
-	sessionId := userctx.SessionID
-	userId := userctx.UserID
+	userCtx := middlewares.UserContext(r)
+	sessionId := userCtx.SessionID
+	userId := userCtx.UserID
 
 	err := dbHelper.DeleteUserSession(sessionId)
 	if err != nil {

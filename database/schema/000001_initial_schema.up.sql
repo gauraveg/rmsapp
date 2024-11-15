@@ -1,69 +1,66 @@
-BEGIN;
 
 CREATE TABLE IF NOT EXISTS users
 (
-    userid      UUID PRIMARY KEY,
+    Id          UUID PRIMARY KEY,
     name        TEXT,
     email       TEXT NOT NULL,
     password    TEXT NOT NULL,
     role        TEXT NOT NULL,
-    createdby   UUID REFERENCES users (userid),
-    createdat   TIMESTAMP DEFAULT NOW(),
-    updatedby   UUID REFERENCES users (userid),
-    updatedat   TIMESTAMP DEFAULT NOW(),
-    archivedat  TIMESTAMP
-);
-CREATE UNIQUE INDEX IF NOT EXISTS unique_user ON users (email) WHERE archivedat IS NULL;
+    createdBy   UUID REFERENCES users (Id),
+    createdAt   TIMESTAMP DEFAULT NOW(),
+    updatedBy   UUID REFERENCES users (Id),
+    updatedAt   TIMESTAMP DEFAULT NOW(),
+    archivedAt  TIMESTAMP DEFAULT NULL
+    );
+CREATE UNIQUE INDEX IF NOT EXISTS unique_user ON users (email) WHERE archivedAt IS NULL;
 
 
-CREATE TABLE IF NOT EXISTS usersession
+CREATE TABLE IF NOT EXISTS user_session
 (
-    sessionid  UUID PRIMARY KEY,
-    userid     UUID REFERENCES users (userid) NOT NULL,
-    createdat  TIMESTAMP DEFAULT NOW(),
-    archivedat TIMESTAMP
+    Id         UUID PRIMARY KEY,
+    userId     UUID REFERENCES users (Id) NOT NULL,
+    createdAt  TIMESTAMP DEFAULT NOW(),
+    archivedAt TIMESTAMP DEFAULT NULL
 );
 
 
-CREATE TABLE IF NOT EXISTS address
+CREATE TABLE IF NOT EXISTS addresses
 (
-    addressid   UUID PRIMARY KEY,
-    addressline TEXT NOT NULL,
+    Id          UUID PRIMARY KEY,
+    address     TEXT NOT NULL,
     latitude    DOUBLE PRECISION,
     longitude   DOUBLE PRECISION,
-    user_id     UUID REFERENCES users (userid) NOT NULL,
-    createdat   TIMESTAMP DEFAULT NOW(),
-    archivedat  TIMESTAMP
+    userId      UUID REFERENCES users (Id) NOT NULL,
+    createdAt   TIMESTAMP DEFAULT NOW(),
+    archivedAt  TIMESTAMP DEFAULT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS unique_address
-    ON address (user_id, addressline)
-    WHERE archivedat IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_addresses
+    ON addresses (userId, address)
+    WHERE archivedAt IS NULL;
 
 
 CREATE TABLE IF NOT EXISTS restaurants
 (
-    restaurantid  UUID PRIMARY KEY,
+    Id            UUID PRIMARY KEY,
     name          TEXT NOT NULL,
-    addressline   TEXT NOT NULL,
+    address       TEXT NOT NULL,
     latitude      DOUBLE PRECISION,
     longitude     DOUBLE PRECISION,
-    createdby     UUID REFERENCES users (userid) NOT NULL,
-    createdat     TIMESTAMP DEFAULT NOW(),
-    archivedat    TIMESTAMP
+    createdBy     UUID REFERENCES users (Id) NOT NULL,
+    createdAt     TIMESTAMP DEFAULT NOW(),
+    archivedAt    TIMESTAMP DEFAULT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS unique_restaurant ON restaurants (name, addressline) WHERE archivedat IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_restaurant ON restaurants (name, address) WHERE archivedAt IS NULL;
 
 
 CREATE TABLE IF NOT EXISTS dishes
 (
-    dishid        UUID PRIMARY KEY,
+    Id            UUID PRIMARY KEY,
     name          TEXT NOT NULL,
     price         INTEGER NOT NULL,
-    restaurantid  UUID REFERENCES restaurants (restaurantid) NOT NULL,
-    createdat     TIMESTAMP DEFAULT NOW(),
-    archivedat    TIMESTAMP
+    restaurantId  UUID REFERENCES restaurants (Id) NOT NULL,
+    createdAt     TIMESTAMP DEFAULT NOW(),
+    archivedAt    TIMESTAMP DEFAULT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS unique_dish ON dishes (restaurantid, name) WHERE archivedat IS NULL;
-
-COMMIT;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_dish ON dishes (restaurantId, name) WHERE archivedAt IS NULL;

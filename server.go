@@ -24,15 +24,15 @@ func RmsRouters() *Server {
 				"status": "ok",
 			})
 		})
-
+		// todo add signup api
 		v1.Post("/login", handlers.UserLogin)
 		v1.Group(func(router chi.Router) {
 			router.Use(middlewares.Authenticate)
 			router.Get("/info", func(w http.ResponseWriter, r *http.Request) {
 				utils.ResponseWithJson(w, http.StatusOK, map[string]string{
-					"Service":        "Restaurent Management System",
+					"Service":        "Restaurant Management System",
 					"Users roles":    "Admin, Sub-admin, Users",
-					"Fetch Data for": "Restaurents, Dishes, registered users",
+					"Fetch Data for": "Restaurants, Dishes, registered users",
 				})
 			})
 			router.Post("/logout", handlers.UserLogout)
@@ -43,24 +43,24 @@ func RmsRouters() *Server {
 				admin.Get("/get-sub-admins", handlers.GetSubAdmins)
 				admin.Post("/create-user", handlers.CreateUser)
 				admin.Get("/get-users", handlers.GetUsersByAdmin)
-				admin.Post("/create-restaurent", handlers.CreateRestaurent)
-				admin.Get("/get-restaurents", handlers.GetRestaurentsByAdmin)
+				admin.Post("/create-restaurant", handlers.CreateRestaurant)
+				admin.Get("/get-restaurants", handlers.GetRestaurantsByAdmin)
 				admin.Route("/{restaurantId}", func(restId chi.Router) {
 					restId.Post("/create-dish", handlers.CreateDish)
 				})
 				admin.Get("/get-all-dishes", handlers.GetAllDishesByAdmin)
 			})
 
-			router.Route("/sub-admin", func(subadmin chi.Router) {
-				subadmin.Use(middlewares.ShouldHaveRole("sub-admin"))
-				subadmin.Post("/create-user", handlers.CreateUser)
-				subadmin.Get("/get-users", handlers.GetUsersBySubAdmin)
-				subadmin.Post("/create-restaurent", handlers.CreateRestaurent)
-				subadmin.Get("/get-restaurents", handlers.GetRestaurentsBySubAdmin)
-				subadmin.Route("/{restaurantId}", func(restId chi.Router) {
+			router.Route("/sub-admin", func(subAdmin chi.Router) {
+				subAdmin.Use(middlewares.ShouldHaveRole("sub-admin"))
+				subAdmin.Post("/create-user", handlers.CreateUser)
+				subAdmin.Get("/get-users", handlers.GetUsersBySubAdmin)
+				subAdmin.Post("/create-restaurant", handlers.CreateRestaurant)
+				subAdmin.Get("/get-restaurants", handlers.GetRestaurantsBySubAdmin)
+				subAdmin.Route("/{restaurantId}", func(restId chi.Router) {
 					restId.Post("/create-dish", handlers.CreateDish)
 				})
-				subadmin.Get("/get-all-dishes", handlers.GetAllDishesBySubAdmin)
+				subAdmin.Get("/get-all-dishes", handlers.GetAllDishesBySubAdmin)
 			})
 		})
 	})

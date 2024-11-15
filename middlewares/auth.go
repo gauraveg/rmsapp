@@ -24,7 +24,6 @@ func Authenticate(next http.Handler) http.Handler {
 				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "token header missing")
 				return
 			}
-
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				_, ok := token.Method.(*jwt.SigningMethodHMAC)
 				if !ok {
@@ -42,13 +41,14 @@ func Authenticate(next http.Handler) http.Handler {
 				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "invalid token claims")
 				return
 			}
+
 			sessionId := claimValues["sessionId"].(string)
-			archivedAt, err := dbHelper.GetArchivedAt(sessionId)
+			userData, err := dbHelper.FetchUserDetails(sessionId)
 			if err != nil {
 				utils.ResponseWithError(w, http.StatusInternalServerError, err, "internal server error")
 				return
 			}
-			if archivedAt != nil {
+			if userData.ArchivedAt != nil {
 				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "invalid token")
 				return
 			}
@@ -57,6 +57,7 @@ func Authenticate(next http.Handler) http.Handler {
 				UserID:    claimValues["userId"].(string),
 				SessionID: sessionId,
 				Role:      claimValues["role"].(string),
+				Email:     userData.Email,
 			}
 
 			ctx := context.WithValue(r.Context(), usercontext, user)
