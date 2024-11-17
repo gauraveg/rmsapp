@@ -52,6 +52,13 @@ func GetRestaurantsByAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//Get the dishes for each restaurants
+	restaurants, err = dbHelper.GetDishesForRestaurantHelper(restaurants)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurant's dishes")
+		return
+	}
+
 	if len(restaurants) > 0 {
 		utils.ResponseWithJson(w, http.StatusCreated, restaurants)
 	} else {
@@ -90,6 +97,13 @@ func GetRestaurantsBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	restaurants, err := dbHelper.GetRestaurantSubAdminHelper(createdBy)
 	if err != nil {
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurants")
+		return
+	}
+
+	//Get the dishes for each restaurants
+	restaurants, err = dbHelper.GetDishesForRestaurantHelper(restaurants)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurant's dishes")
 		return
 	}
 

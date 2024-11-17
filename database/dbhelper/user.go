@@ -10,7 +10,7 @@ import (
 )
 
 func GetUserById(userId, role string) (models.User, error) {
-	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt, archivedAt from public.users 
+	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt from public.users 
 					where Id=$1 and archivedAt is NULL`
 
 	var userData models.User
@@ -20,7 +20,7 @@ func GetUserById(userId, role string) (models.User, error) {
 	}
 
 	if role == "user" {
-		sqlQueryAddr := `select Id, address, latitude, longitude, userId, createdAt, archivedAt 
+		sqlQueryAddr := `select Id, address, latitude, longitude, userId, createdAt 
 							from public.addresses where userId=$1`
 
 		addressData := make([]models.AddressData, 0)
@@ -102,7 +102,7 @@ func CreateUserHelper(email, name, hashPwd, createdBy, role string, address []mo
 
 // Fetch Users
 func GetUsersHelper(role string) ([]models.User, error) {
-	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt, archivedAt 
+	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt 
 					from public.users where role=$1 and archivedAt is null`
 	userData := make([]models.User, 0)
 	err := database.RmsDB.Select(&userData, sqlQuery, role)
@@ -112,8 +112,8 @@ func GetUsersHelper(role string) ([]models.User, error) {
 
 // Fetch Address
 func GetAddressForUser(userData []models.User) ([]models.User, error) {
-	sqlQuery := `select Id, address, latitude, longitude, user_id, createdAt, archivedAt 
-							from public.addresses where Id=$1`
+	sqlQuery := `select Id, address, latitude, longitude, userId, createdAt 
+							from public.addresses where userId=$1`
 
 	var err error
 	for i := range userData {
@@ -126,10 +126,10 @@ func GetAddressForUser(userData []models.User) ([]models.User, error) {
 }
 
 func GetUsersSubAdminHelper(role, createdBy string) ([]models.User, error) {
-	sqlquery := `select userid, name, email, role, createdby, createdat, updatedby, updatedat, archivedat 
-					from public.users where role=$1 and createdby=$2 and archivedat is null`
-	userdata := make([]models.User, 0)
-	err := database.RmsDB.Select(&userdata, sqlquery, role, createdBy)
+	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt 
+					from public.users where role=$1 and createdBy=$2 and archivedAt is null`
+	userData := make([]models.User, 0)
+	err := database.RmsDB.Select(&userData, sqlQuery, role, createdBy)
 
-	return userdata, err
+	return userData, err
 }

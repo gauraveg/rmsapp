@@ -28,6 +28,8 @@ func RmsRouters() *Server {
 		v1.Post("/login", handlers.UserLogin)
 		v1.Group(func(router chi.Router) {
 			router.Use(middlewares.Authenticate)
+
+			//Login check. To be removed later.
 			router.Get("/info", func(w http.ResponseWriter, r *http.Request) {
 				utils.ResponseWithJson(w, http.StatusOK, map[string]string{
 					"Service":        "Restaurant Management System",
@@ -35,7 +37,6 @@ func RmsRouters() *Server {
 					"Fetch Data for": "Restaurants, Dishes, registered users",
 				})
 			})
-			router.Post("/logout", handlers.UserLogout)
 
 			router.Route("/admin", func(admin chi.Router) {
 				admin.Use(middlewares.ShouldHaveRole("admin"))
@@ -62,6 +63,8 @@ func RmsRouters() *Server {
 				})
 				subAdmin.Get("/get-all-dishes", handlers.GetAllDishesBySubAdmin)
 			})
+
+			router.Post("/logout", handlers.UserLogout)
 		})
 	})
 

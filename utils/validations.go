@@ -10,7 +10,7 @@ import (
 func ValidateUserPayload(payload models.UserData) bool {
 	roles := []string{"user", "admin", "sub-admin"}
 
-	matchName, _ := regexp.MatchString("[A-Za-z ]", payload.Name)
+	matchName, _ := regexp.MatchString("^[A-Za-z0-9 ]+$", payload.Name)
 	matchEmail, _ := regexp.MatchString("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", payload.Email)
 	matchRole := slices.Contains(roles, payload.Role)
 
@@ -23,14 +23,15 @@ func ValidateUserPayload(payload models.UserData) bool {
 
 func ValidateAddress(payload models.UserData) models.UserData {
 	addresses := payload.Addresses
+	regEx, _ := regexp.Compile("^[A-Za-z0-9 ]+$")
+	newAddr := make([]models.AddressData, 0)
 	for i := range addresses {
-		matchAddr, _ := regexp.MatchString("[A-Za-z ]", addresses[i].Address)
-		if !matchAddr {
-			addresses[i] = addresses[len(addresses)-1]
-			addresses = addresses[:len(addresses)-1]
+		matchAddr := regEx.MatchString(addresses[i].Address)
+		if matchAddr {
+			newAddr = append(newAddr, addresses[i])
 		}
 	}
 
-	payload.Addresses = addresses
+	payload.Addresses = newAddr
 	return payload
 }

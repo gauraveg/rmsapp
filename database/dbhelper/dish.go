@@ -9,20 +9,20 @@ import (
 )
 
 func GetDishById(dishId string) (models.Dish, error) {
-	sqlQuery := `select dishid, name, price, restaurantid, createdat, archivedat from public.dishes 
-					where dishid=$1 and archivedat is NULL`
+	sqlQuery := `select Id, name, price, restaurantId, createdAt, archivedAt from public.dishes 
+					where Id=$1 and archivedAt is NULL`
 
-	var dishdata models.Dish
-	getErr := database.RmsDB.Get(&dishdata, sqlQuery, dishId)
+	var dishData models.Dish
+	getErr := database.RmsDB.Get(&dishData, sqlQuery, dishId)
 	if getErr != nil {
-		return dishdata, getErr
+		return dishData, getErr
 	}
 
-	return dishdata, nil
+	return dishData, nil
 }
 
 func IsDishExists(name string, restaurantId string) (bool, error) {
-	sqlQuery := `select count(dishid) > 0 as isExists from public.dishes where name=$1 and restaurantid=$2 and archivedat is null`
+	sqlQuery := `select count(Id) > 0 as isExists from public.dishes where name=$1 and restaurantId=$2 and archivedAt is null`
 	var exists bool
 	err := database.RmsDB.Get(&exists, sqlQuery, name, restaurantId)
 	return exists, err
@@ -30,29 +30,31 @@ func IsDishExists(name string, restaurantId string) (bool, error) {
 
 func CreateDishHelper(name string, price int, restaurantId string) (string, error) {
 	var dishId uuid.UUID
-	sqlQuery := `insert into public.dishes (dishid, name, price, restaurantid, createdat) 
-					values ($1, $2, $3, $4, $5) returning dishid;`
+	sqlQuery := `insert into public.dishes (Id, name, price, restaurantId, createdAt) 
+					values ($1, $2, $3, $4, $5) returning Id;`
 
 	crtErr := database.RmsDB.Get(&dishId, sqlQuery, uuid.New(), name, price, restaurantId, time.Now())
 	return dishId.String(), crtErr
 }
 
 func GetAllDishHelper() ([]models.Dish, error) {
-	sqlquery := `select dishid, name, price, restaurantid, createdat, archivedat 
-					from public.dishes where archivedat is null`
-	dishdata := make([]models.Dish, 0)
-	err := database.RmsDB.Select(&dishdata, sqlquery)
+	sqlQuery := `select d.Id, d.name, d.price, d.restaurantId, r.name as restaurantName, d.createdAt
+					from public.dishes d inner join public.restaurants r
+					on r.Id = d.restaurantId 
+					where d.archivedAt is null`
+	dishData := make([]models.Dish, 0)
+	err := database.RmsDB.Select(&dishData, sqlQuery)
 
-	return dishdata, err
+	return dishData, err
 }
 
 func GetAllDishSubAdminHelper(createdBy string) ([]models.Dish, error) {
-	sqlquery := `select d.dishid, d.name, d.price, d.restaurantid, d.createdat 
-					from public.dishes d INNER JOIN public.restaurants r
-					on r.restaurantid = d.restaurantid 
-					where d.archivedat is null and r.createdby = $1`
-	dishdata := make([]models.Dish, 0)
-	err := database.RmsDB.Select(&dishdata, sqlquery, createdBy)
+	sqlQuery := `select d.Id, d.name, d.price, d.restaurantId, r.name as restaurantName, d.createdAt
+					from public.dishes d inner join public.restaurants r
+					on r.Id = d.restaurantId 
+					where d.archivedAt is null and r.createdBy = $1`
+	dishData := make([]models.Dish, 0)
+	err := database.RmsDB.Select(&dishData, sqlQuery, createdBy)
 
-	return dishdata, err
+	return dishData, err
 }

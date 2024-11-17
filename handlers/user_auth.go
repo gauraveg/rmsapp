@@ -8,6 +8,7 @@ import (
 	"github.com/gauraveg/rmsapp/middlewares"
 	"github.com/gauraveg/rmsapp/models"
 	"github.com/gauraveg/rmsapp/utils"
+	"github.com/go-playground/validator/v10"
 )
 
 func UserLogin(w http.ResponseWriter, r *http.Request) {
@@ -15,6 +16,14 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
 		utils.ResponseWithError(w, http.StatusBadRequest, err, err.Error())
+		return
+	}
+
+	//Validator to check the payload's required fields
+	validate := validator.New()
+	err = validate.Struct(payload)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload's required validation failed.")
 		return
 	}
 

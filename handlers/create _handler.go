@@ -9,6 +9,7 @@ import (
 	"github.com/gauraveg/rmsapp/models"
 	"github.com/gauraveg/rmsapp/utils"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 )
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +20,15 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
-		utils.ResponseWithError(w, http.StatusBadRequest, err, "Can not parse the payload")
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload cannot be parsed. Check the payload")
+		return
+	}
+
+	//Validator to check the payload's required fields
+	validate := validator.New()
+	err = validate.Struct(payload)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload's required validation failed.")
 		return
 	}
 
@@ -57,18 +66,26 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 		utils.ResponseWithJson(w, http.StatusCreated, user)
 	} else {
-		utils.ResponseWithError(w, http.StatusBadRequest, errors.New("Payload has incorrect data"), "Failed as user data has incorrect details")
+		utils.ResponseWithError(w, http.StatusBadRequest, errors.New("payload has incorrect data"), "Failed as user data has incorrect details")
 	}
 }
 
 func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 	var payload models.RestaurantsRequest
-	userctx := middlewares.UserContext(r)
-	createdBy := userctx.UserID
+	userCtx := middlewares.UserContext(r)
+	createdBy := userCtx.UserID
 
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
-		utils.ResponseWithError(w, http.StatusBadRequest, err, err.Error())
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload cannot be parsed. Check the payload")
+		return
+	}
+
+	//Validator to check the payload's required fields
+	validate := validator.New()
+	err = validate.Struct(payload)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload's required validation failed.")
 		return
 	}
 
@@ -104,6 +121,14 @@ func CreateDish(w http.ResponseWriter, r *http.Request) {
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
 		utils.ResponseWithError(w, http.StatusBadRequest, err, err.Error())
+		return
+	}
+
+	//Validator to check the payload's required fields
+	validate := validator.New()
+	err = validate.Struct(payload)
+	if err != nil {
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload's required validation failed.")
 		return
 	}
 
