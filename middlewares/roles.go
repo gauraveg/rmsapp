@@ -1,7 +1,11 @@
 package middlewares
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+
+	"github.com/gauraveg/rmsapp/utils"
 )
 
 func ShouldHaveRole(role string) func(http.Handler) http.Handler {
@@ -10,6 +14,8 @@ func ShouldHaveRole(role string) func(http.Handler) http.Handler {
 			userRole := UserContext(r).Role
 			if userRole != role {
 				w.WriteHeader(http.StatusForbidden)
+				msg := fmt.Sprintf("Cannot access this endpoint as %v", userRole)
+				utils.ResponseWithError(w, http.StatusBadRequest, errors.New("endpoint forbidden"), msg)
 				return
 			}
 			next.ServeHTTP(w, r)

@@ -12,9 +12,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type usercon string
+type userCon string
 
-const usercontext usercon = "userContext"
+const userContext userCon = "userContext"
 
 func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(
@@ -60,7 +60,7 @@ func Authenticate(next http.Handler) http.Handler {
 				Email:     userData.Email,
 			}
 
-			ctx := context.WithValue(r.Context(), usercontext, user)
+			ctx := context.WithValue(r.Context(), userContext, user)
 			r = r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)
@@ -69,7 +69,7 @@ func Authenticate(next http.Handler) http.Handler {
 }
 
 func UserContext(r *http.Request) *models.UserCtx {
-	user, ok := r.Context().Value(usercontext).(*models.UserCtx)
+	user, ok := r.Context().Value(userContext).(*models.UserCtx)
 	if !ok {
 		return nil
 	}

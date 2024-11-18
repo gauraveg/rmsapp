@@ -34,10 +34,9 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	//payload validations
 	valid := utils.ValidateUserPayload(payload)
-
 	if valid {
 		//Validate address. If invalid, remove that particular address from payload
-		payload = utils.ValidateAddress(payload)
+		payload = utils.ValidateUserAddress(payload)
 		exist, err := dbHelper.IsUserExists(payload.Email)
 		if err != nil {
 			utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding user")
@@ -89,34 +88,44 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exist, err := dbHelper.IsRestaurantExists(payload.Name, payload.Address)
-	if err != nil {
-		utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding restaurant")
-		return
-	}
-	if exist {
-		utils.ResponseWithError(w, http.StatusConflict, nil, "Restaurant Already Exists")
-	}
+	//payload validations
+	valid := utils.ValidateRestPayload(payload)
+	if valid {
+		//Validate address. If invalid, remove that particular address from payload
+		payload = utils.ValidateRestAddress(payload)
+		exist, err := dbHelper.IsRestaurantExists(payload.Name, payload.Address)
+		if err != nil {
+			utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding restaurant")
+			return
+		}
+		if exist {
+			utils.ResponseWithError(w, http.StatusConflict, nil, "Restaurant Already Exists")
+		}
 
-	restaurantId, resEr := dbHelper.CreateRestaurantHelper(payload.Name, payload.Address, payload.Latitude, payload.Longitude, createdBy)
-	if resEr != nil {
-		utils.ResponseWithError(w, http.StatusInternalServerError, resEr, "Failed to add new Restaurant")
-		return
-	}
+		restaurantId, resEr := dbHelper.CreateRestaurantHelper(payload.Name, payload.Address, payload.Latitude, payload.Longitude, createdBy)
+		if resEr != nil {
+			utils.ResponseWithError(w, http.StatusInternalServerError, resEr, "Failed to add new Restaurant")
+			return
+		}
 
-	var restaurant models.Restaurant
-	restaurant, restEr := dbHelper.GetRestaurantById(restaurantId)
-	if restEr != nil {
-		utils.ResponseWithError(w, http.StatusInternalServerError, restEr, "Failed to create and fetch restaurant data")
-		return
-	}
+		var restaurant models.Restaurant
+		restaurant, restEr := dbHelper.GetRestaurantById(restaurantId)
+		if restEr != nil {
+			utils.ResponseWithError(w, http.StatusInternalServerError, restEr, "Failed to create and fetch restaurant data")
+			return
+		}
 
-	utils.ResponseWithJson(w, http.StatusCreated, restaurant)
+		utils.ResponseWithJson(w, http.StatusCreated, restaurant)
+	} else {
+		utils.ResponseWithError(w, http.StatusBadRequest, errors.New("payload has incorrect data"), "Failed as restaurant data has incorrect details")
+	}
 }
 
 func CreateDish(w http.ResponseWriter, r *http.Request) {
 	var payload models.DishRequest
 	restaurantId := chi.URLParam(r, "restaurantId")
+	userCtx := middlewares.UserContext(r)
+	createdBy := userCtx.UserID
 
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
@@ -132,27 +141,43 @@ func CreateDish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exist, err := dbHelper.IsDishExists(payload.Name, restaurantId)
-	if err != nil {
-		utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding dishes")
-		return
-	}
-	if exist {
-		utils.ResponseWithError(w, http.StatusConflict, nil, "Dish Already Exists")
-	}
+	valid := utils.ValidateDishPayload(payload)
+	if valid {
+		//Check if restaurant is created by sub-admin
+		restExist, err := dbHelper.GetRestaurantById(restaurantId)
+		if err != nil {
+			utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while searching for restaurants")
+			return
+		}
 
-	dishId, resEr := dbHelper.CreateDishHelper(payload.Name, payload.Price, restaurantId)
-	if resEr != nil {
-		utils.ResponseWithError(w, http.StatusInternalServerError, resEr, "Failed to add new Restaurant")
-		return
-	}
+		if restExist.CreatedBy == createdBy {
+			exist, err := dbHelper.IsDishExists(payload.Name, restaurantId)
+			if err != nil {
+				utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding dishes")
+				return
+			}
+			if exist {
+				utils.ResponseWithError(w, http.StatusConflict, nil, "Dish Already Exists")
+			}
 
-	var dish models.Dish
-	dish, dishEr := dbHelper.GetDishById(dishId)
-	if dishEr != nil {
-		utils.ResponseWithError(w, http.StatusInternalServerError, dishEr, "Failed to create and fetch restaurant data")
-		return
-	}
+			dishId, resEr := dbHelper.CreateDishHelper(payload.Name, payload.Price, restaurantId)
+			if resEr != nil {
+				utils.ResponseWithError(w, http.StatusInternalServerError, resEr, "Failed to add new Restaurant")
+				return
+			}
 
-	utils.ResponseWithJson(w, http.StatusCreated, dish)
+			var dish models.Dish
+			dish, dishEr := dbHelper.GetDishById(dishId)
+			if dishEr != nil {
+				utils.ResponseWithError(w, http.StatusInternalServerError, dishEr, "Failed to create and fetch restaurant data")
+				return
+			}
+
+			utils.ResponseWithJson(w, http.StatusCreated, dish)
+		} else {
+			utils.ResponseWithError(w, http.StatusBadRequest, errors.New("restaurant Id in URL param can't be accessed by sub-admin or does not exist"), "Restaurant can't be accessed by sub-admin or does not exist")
+		}
+	} else {
+		utils.ResponseWithError(w, http.StatusBadRequest, errors.New("payload has incorrect data"), "Failed as dish data has incorrect details")
+	}
 }

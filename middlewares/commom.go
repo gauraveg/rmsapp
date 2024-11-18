@@ -2,11 +2,11 @@ package middlewares
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 )
 
 func corsOptions() *cors.Cors {
@@ -33,15 +33,15 @@ func CommonMiddleware() chi.Middlewares {
 				defer func() {
 					err := recover()
 					if err != nil {
-						log.Printf("Request Panic err: %v", err)
+						zap.L().Panic("Request Panic err", zap.String("error", err.(string)))
 						jsonBody, _ := json.Marshal(map[string]string{
-							"error": "There was an internal server error",
+							"error": "Internal server error",
 						})
 						w.Header().Set("Content-Type", "application/json")
 						w.WriteHeader(http.StatusInternalServerError)
 						_, err := w.Write(jsonBody)
 						if err != nil {
-							log.Printf("Failed to send response from middleware with error: %+v", err) // Log error if response fails to send
+							zap.L().Error("Failed to send response from middleware", zap.Error(err))
 						}
 					}
 				}()

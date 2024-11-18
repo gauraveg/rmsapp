@@ -15,7 +15,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	var payload models.LoginRequest
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
-		utils.ResponseWithError(w, http.StatusBadRequest, err, err.Error())
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "cannot parse payload data")
 		return
 	}
 
@@ -23,7 +23,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	validate := validator.New()
 	err = validate.Struct(payload)
 	if err != nil {
-		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload's required validation failed.")
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload's required validation failed")
 		return
 	}
 
@@ -51,7 +51,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 			Token:  jwtToken,
 		})
 	} else {
-		utils.ResponseWithError(w, http.StatusOK, errors.New("password invalid"), "Login Failed. Check email or password")
+		utils.ResponseWithError(w, http.StatusOK, errors.New("password invalid"), "Login Failed. Email or password invalid")
 		return
 	}
 }

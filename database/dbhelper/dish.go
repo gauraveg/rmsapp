@@ -9,8 +9,10 @@ import (
 )
 
 func GetDishById(dishId string) (models.Dish, error) {
-	sqlQuery := `select Id, name, price, restaurantId, createdAt, archivedAt from public.dishes 
-					where Id=$1 and archivedAt is NULL`
+	sqlQuery := `select d.Id, d.name, d.price, d.restaurantId, r.name as restaurantName, d.createdAt
+					from public.dishes d inner join public.restaurants r
+					on r.Id = d.restaurantId 
+					where d.Id = $1 and d.archivedAt is null`
 
 	var dishData models.Dish
 	getErr := database.RmsDB.Get(&dishData, sqlQuery, dishId)

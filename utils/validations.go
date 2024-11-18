@@ -3,14 +3,25 @@ package utils
 import (
 	"regexp"
 	"slices"
+	"strconv"
 
 	"github.com/gauraveg/rmsapp/models"
 )
 
+func AlphaNumRegexCheck(value string) bool {
+	isValid, _ := regexp.MatchString("^[A-Za-z0-9 ]+$", value)
+	return isValid
+}
+
+func NumRegexCheck(value string) bool {
+	isValid, _ := regexp.MatchString("^[0-9.]+$", value)
+	return isValid
+}
+
 func ValidateUserPayload(payload models.UserData) bool {
 	roles := []string{"user", "admin", "sub-admin"}
 
-	matchName, _ := regexp.MatchString("^[A-Za-z0-9 ]+$", payload.Name)
+	matchName := AlphaNumRegexCheck(payload.Name)
 	matchEmail, _ := regexp.MatchString("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", payload.Email)
 	matchRole := slices.Contains(roles, payload.Role)
 
@@ -21,7 +32,7 @@ func ValidateUserPayload(payload models.UserData) bool {
 	}
 }
 
-func ValidateAddress(payload models.UserData) models.UserData {
+func ValidateUserAddress(payload models.UserData) models.UserData {
 	addresses := payload.Addresses
 	regEx, _ := regexp.Compile("^[A-Za-z0-9 ]+$")
 	newAddr := make([]models.AddressData, 0)
@@ -34,4 +45,40 @@ func ValidateAddress(payload models.UserData) models.UserData {
 
 	payload.Addresses = newAddr
 	return payload
+}
+
+func ValidateRestPayload(payload models.RestaurantsRequest) bool {
+	matchName := AlphaNumRegexCheck(payload.Name)
+
+	if matchName {
+		return true
+	} else {
+		return false
+	}
+}
+
+func ValidateRestAddress(payload models.RestaurantsRequest) models.RestaurantsRequest {
+	matchAddr := AlphaNumRegexCheck(payload.Address)
+	matchLat := NumRegexCheck(strconv.FormatFloat(payload.Latitude, 'f', -1, 64))
+	matchLong := NumRegexCheck(strconv.FormatFloat(payload.Longitude, 'f', -1, 64))
+	if !matchAddr {
+		payload.Address = ""
+	}
+	if !matchLat {
+		payload.Latitude = 0
+	}
+	if !matchLong {
+		payload.Longitude = 0
+	}
+	return payload
+}
+
+func ValidateDishPayload(payload models.DishRequest) bool {
+	matchName := AlphaNumRegexCheck(payload.Name)
+	matchPrice := NumRegexCheck(strconv.Itoa(payload.Price))
+	if matchName && matchPrice {
+		return true
+	} else {
+		return false
+	}
 }

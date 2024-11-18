@@ -3,12 +3,12 @@ package utils
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,16 +17,16 @@ func ResponseWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	if payload != nil {
 		err := json.NewEncoder(w).Encode(payload)
 		if err != nil {
-			log.Printf("Cannot parse payload : %v", err)
+			zap.L().Error("Cannot parse payload", zap.Error(err))
 			return
 		}
 	}
 }
 
 func ResponseWithError(w http.ResponseWriter, code int, err error, msg string) {
-	log.Printf("Error: %v", err)
+	zap.L().Error("Exception occurred", zap.Error(err))
 	if code > 499 {
-		log.Printf("Responding with 5XX error: %s", msg)
+		zap.L().Error("Responding with 5XX error", zap.Error(err))
 	}
 	type errorResponse struct {
 		Error string `json:"error"`
@@ -48,7 +48,7 @@ func ParsePayload(body io.Reader, out interface{}) error {
 func HashingPwd(pwd string) string {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println(err)
+		zap.L().Error("cannot hash password", zap.Error(err))
 	}
 
 	return string(hash)
@@ -56,6 +56,9 @@ func HashingPwd(pwd string) string {
 
 func VerifyPwdHash(pwd string, userPwdHash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(userPwdHash), []byte(pwd))
+	if err != nil {
+		zap.L().Error("cannot verify password", zap.Error(err))
+	}
 	return err == nil
 }
 
