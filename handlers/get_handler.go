@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	dbHelper "github.com/gauraveg/rmsapp/database/dbhelper"
@@ -9,9 +10,12 @@ import (
 )
 
 func GetUsersByAdmin(w http.ResponseWriter, r *http.Request) {
+	userCtx := middlewares.UserContext(r)
+	email := userCtx.Email
 	role := "user"
 	userData, err := dbHelper.GetUsersHelper(role)
 	if err != nil {
+		utils.LogError("Failed to fetch", err, "Admin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch user")
 		return
 	}
@@ -19,6 +23,7 @@ func GetUsersByAdmin(w http.ResponseWriter, r *http.Request) {
 	//Fetch Address for role as user
 	userData, err = dbHelper.GetAddressForUser(userData)
 	if err != nil {
+		utils.LogError("Failed to fetch user's address", err, "Admin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch user's address")
 		return
 	}
@@ -31,9 +36,12 @@ func GetUsersByAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSubAdmins(w http.ResponseWriter, r *http.Request) {
+	userCtx := middlewares.UserContext(r)
+	email := userCtx.Email
 	role := "sub-admin"
 	subAdmins, err := dbHelper.GetUsersHelper(role)
 	if err != nil {
+		utils.LogError("Failed to fetch", err, "Admin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch sub admin user")
 		return
 	}
@@ -46,15 +54,19 @@ func GetSubAdmins(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetRestaurantsByAdmin(w http.ResponseWriter, r *http.Request) {
+	userCtx := middlewares.UserContext(r)
+	email := userCtx.Email
 	restaurants, err := dbHelper.GetRestaurantHelper()
 	if err != nil {
-		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch sub admin user")
+		utils.LogError("Failed to fetch restaurants", err, "Admin", fmt.Sprintf("%#v", email))
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurants")
 		return
 	}
 
 	//Get the dishes for each restaurants
 	restaurants, err = dbHelper.GetDishesForRestaurantHelper(restaurants)
 	if err != nil {
+		utils.LogError("Failed to fetch restaurant's dishes", err, "Admin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurant's dishes")
 		return
 	}
@@ -70,9 +82,11 @@ func GetUsersBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	role := "user"
 	userCtx := middlewares.UserContext(r)
 	createdBy := userCtx.UserID
+	email := userCtx.Email
 
 	userData, err := dbHelper.GetUsersSubAdminHelper(role, createdBy)
 	if err != nil {
+		utils.LogError("Failed to fetch user", err, "SubAdmin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch user")
 		return
 	}
@@ -80,6 +94,7 @@ func GetUsersBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	//Fetch Address for role as user
 	userData, err = dbHelper.GetAddressForUser(userData)
 	if err != nil {
+		utils.LogError("Failed to fetch user's address", err, "SubAdmin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch user's address")
 		return
 	}
@@ -94,8 +109,10 @@ func GetUsersBySubAdmin(w http.ResponseWriter, r *http.Request) {
 func GetRestaurantsBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	userCtx := middlewares.UserContext(r)
 	createdBy := userCtx.UserID
+	email := userCtx.Email
 	restaurants, err := dbHelper.GetRestaurantSubAdminHelper(createdBy)
 	if err != nil {
+		utils.LogError("Failed to fetch restaurants", err, "SubAdmin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurants")
 		return
 	}
@@ -103,6 +120,7 @@ func GetRestaurantsBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	//Get the dishes for each restaurants
 	restaurants, err = dbHelper.GetDishesForRestaurantHelper(restaurants)
 	if err != nil {
+		utils.LogError("Failed to fetch restaurant's dishes", err, "SubAdmin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurant's dishes")
 		return
 	}
@@ -115,8 +133,11 @@ func GetRestaurantsBySubAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllDishesByAdmin(w http.ResponseWriter, r *http.Request) {
+	userCtx := middlewares.UserContext(r)
+	email := userCtx.Email
 	dishes, err := dbHelper.GetAllDishHelper()
 	if err != nil {
+		utils.LogError("Failed to fetch dishes", err, "SubAdmin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
 		return
 	}
@@ -131,9 +152,11 @@ func GetAllDishesByAdmin(w http.ResponseWriter, r *http.Request) {
 func GetAllDishesBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	userCtx := middlewares.UserContext(r)
 	createdBy := userCtx.UserID
+	email := userCtx.Email
 
 	dishes, err := dbHelper.GetAllDishSubAdminHelper(createdBy)
 	if err != nil {
+		utils.LogError("Failed to fetch dishes", err, "SubAdmin", fmt.Sprintf("%#v", email))
 		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
 		return
 	}

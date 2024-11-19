@@ -24,7 +24,7 @@ func ResponseWithJson(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func ResponseWithError(w http.ResponseWriter, code int, err error, msg string) {
-	zap.L().Error("Exception occurred", zap.Error(err))
+	//zap.L().Error("Exception occurred", zap.Error(err))
 	if code > 499 {
 		zap.L().Error("Responding with 5XX error", zap.Error(err))
 	}
@@ -72,4 +72,10 @@ func GenerateJwt(userId, role, sessionId string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
+}
+
+func LogError(errMsg string, err error, key, value string) {
+	zap.L().Error(errMsg,
+		zap.Error(err),
+		zap.String(key, value))
 }
