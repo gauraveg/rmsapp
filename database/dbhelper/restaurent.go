@@ -67,3 +67,15 @@ func GetDishesForRestaurantHelper(resData []models.Restaurant) ([]models.Restaur
 
 	return resData, err
 }
+
+func GetAllRestsByUserHelper() ([]models.Restaurant, error) {
+	sqlQuery := `select r.Id, r.name, r.address, r.latitude, r.longitude, d.name as dishName, d.price
+				from public.restaurants r
+						inner join public.dishes d on d.restaurantId = r.id
+				where r.archivedAt is null order by r.name`
+
+	restData := make([]models.Restaurant, 0)
+	err := database.RmsDB.Select(&restData, sqlQuery)
+
+	return restData, err
+}

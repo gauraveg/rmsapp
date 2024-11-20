@@ -60,3 +60,23 @@ func GetAllDishSubAdminHelper(createdBy string) ([]models.Dish, error) {
 
 	return dishData, err
 }
+
+func GetAllDishesByUserHelper() ([]models.Dish, error) {
+	sqlQuery := `select d.Id, d.name, d.price, d.restaurantId, r.name as restaurantName, d.createdAt
+				from public.dishes d inner join public.restaurants r
+				on r.Id = d.restaurantId 
+				where d.archivedAt is null`
+	dishData := make([]models.Dish, 0)
+	err := database.RmsDB.Select(&dishData, sqlQuery)
+
+	return dishData, err
+}
+
+func GetDishesByRestIdHelper(restaurantId string) ([]models.DishData, error) {
+	sqlQuery := `select Id, name, price, restaurantId, createdAt from public.dishes where restaurantId=$1`
+
+	dishData := make([]models.DishData, 0)
+	err := database.RmsDB.Select(&dishData, sqlQuery, restaurantId)
+
+	return dishData, err
+}

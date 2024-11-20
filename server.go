@@ -29,19 +29,10 @@ func RmsRouters() *Server {
 		v1.Group(func(router chi.Router) {
 			router.Use(middlewares.Authenticate)
 
-			//Login check. To be removed later.
-			router.Get("/info", func(w http.ResponseWriter, r *http.Request) {
-				utils.ResponseWithJson(w, http.StatusOK, map[string]string{
-					"Service":        "Restaurant Management System",
-					"Users roles":    "Admin, Sub-admin, Users",
-					"Fetch Data for": "Restaurants, Dishes, registered users",
-				})
-			})
-
 			router.Route("/admin", func(admin chi.Router) {
 				admin.Use(middlewares.ShouldHaveRole("admin"))
 				admin.Post("/create-sub-admin", handlers.CreateUser)
-				admin.Get("/get-sub-admins", handlers.GetSubAdmins)
+				admin.Get("/get-sub-admins", handlers.GetSubAdminsByAdmin)
 				admin.Post("/create-user", handlers.CreateUser)
 				admin.Get("/get-users", handlers.GetUsersByAdmin)
 				admin.Post("/create-restaurant", handlers.CreateRestaurant)
@@ -62,6 +53,15 @@ func RmsRouters() *Server {
 					restId.Post("/create-dish", handlers.CreateDish)
 				})
 				subAdmin.Get("/get-all-dishes", handlers.GetAllDishesBySubAdmin)
+			})
+
+			router.Route("/user", func(user chi.Router) {
+				user.Use(middlewares.ShouldHaveRole("user"))
+				user.Get("/get-all-restaurants", handlers.GetRestaurantsByAdmin)
+				user.Get("/get-all-dishes", handlers.GetAllDishesByAdmin)
+				user.Route("/{restaurantId}", func(restId chi.Router) {
+					restId.Get("/dishes-by-restaurant", handlers.GetDishesByRestId)
+				})
 			})
 
 			router.Post("/logout", handlers.UserLogout)

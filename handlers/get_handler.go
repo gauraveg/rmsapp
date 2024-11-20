@@ -7,8 +7,11 @@ import (
 	dbHelper "github.com/gauraveg/rmsapp/database/dbhelper"
 	"github.com/gauraveg/rmsapp/middlewares"
 	"github.com/gauraveg/rmsapp/utils"
+	"github.com/go-chi/chi/v5"
 )
 
+// ----------------------------------------------------------------------------------------------------------
+// BY ADMINS
 func GetUsersByAdmin(w http.ResponseWriter, r *http.Request) {
 	userCtx := middlewares.UserContext(r)
 	email := userCtx.Email
@@ -29,13 +32,13 @@ func GetUsersByAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(userData) > 0 {
-		utils.ResponseWithJson(w, http.StatusCreated, userData)
+		utils.ResponseWithJson(w, http.StatusOK, userData)
 	} else {
-		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responseBody": "No record found"})
+		utils.ResponseWithJson(w, http.StatusOK, map[string]string{"responseBody": "No record found"})
 	}
 }
 
-func GetSubAdmins(w http.ResponseWriter, r *http.Request) {
+func GetSubAdminsByAdmin(w http.ResponseWriter, r *http.Request) {
 	userCtx := middlewares.UserContext(r)
 	email := userCtx.Email
 	role := "sub-admin"
@@ -47,9 +50,9 @@ func GetSubAdmins(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(subAdmins) > 0 {
-		utils.ResponseWithJson(w, http.StatusCreated, subAdmins)
+		utils.ResponseWithJson(w, http.StatusOK, subAdmins)
 	} else {
-		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responseBody": "No record found"})
+		utils.ResponseWithJson(w, http.StatusOK, map[string]string{"responseBody": "No record found"})
 	}
 }
 
@@ -72,12 +75,31 @@ func GetRestaurantsByAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(restaurants) > 0 {
-		utils.ResponseWithJson(w, http.StatusCreated, restaurants)
+		utils.ResponseWithJson(w, http.StatusOK, restaurants)
 	} else {
-		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responseBody": "No record found"})
+		utils.ResponseWithJson(w, http.StatusOK, map[string]string{"responseBody": "No record found"})
 	}
 }
 
+func GetAllDishesByAdmin(w http.ResponseWriter, r *http.Request) {
+	userCtx := middlewares.UserContext(r)
+	email := userCtx.Email
+	dishes, err := dbHelper.GetAllDishHelper()
+	if err != nil {
+		utils.LogError("Failed to fetch dishes", err, "SubAdmin", fmt.Sprintf("%#v", email))
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
+		return
+	}
+
+	if len(dishes) > 0 {
+		utils.ResponseWithJson(w, http.StatusOK, dishes)
+	} else {
+		utils.ResponseWithJson(w, http.StatusOK, map[string]string{"responseBody": "No record found"})
+	}
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+// BY SUB-ADMINS
 func GetUsersBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	role := "user"
 	userCtx := middlewares.UserContext(r)
@@ -100,9 +122,9 @@ func GetUsersBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(userData) > 0 {
-		utils.ResponseWithJson(w, http.StatusCreated, userData)
+		utils.ResponseWithJson(w, http.StatusOK, userData)
 	} else {
-		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responseBody": "No record found"})
+		utils.ResponseWithJson(w, http.StatusOK, map[string]string{"responseBody": "No record found"})
 	}
 }
 
@@ -126,26 +148,9 @@ func GetRestaurantsBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(restaurants) > 0 {
-		utils.ResponseWithJson(w, http.StatusCreated, restaurants)
+		utils.ResponseWithJson(w, http.StatusOK, restaurants)
 	} else {
-		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responseBody": "No record found"})
-	}
-}
-
-func GetAllDishesByAdmin(w http.ResponseWriter, r *http.Request) {
-	userCtx := middlewares.UserContext(r)
-	email := userCtx.Email
-	dishes, err := dbHelper.GetAllDishHelper()
-	if err != nil {
-		utils.LogError("Failed to fetch dishes", err, "SubAdmin", fmt.Sprintf("%#v", email))
-		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
-		return
-	}
-
-	if len(dishes) > 0 {
-		utils.ResponseWithJson(w, http.StatusCreated, dishes)
-	} else {
-		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responseBody": "No record found"})
+		utils.ResponseWithJson(w, http.StatusOK, map[string]string{"responseBody": "No record found"})
 	}
 }
 
@@ -162,8 +167,62 @@ func GetAllDishesBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(dishes) > 0 {
-		utils.ResponseWithJson(w, http.StatusCreated, dishes)
+		utils.ResponseWithJson(w, http.StatusOK, dishes)
 	} else {
-		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{"responseBody": "No record found"})
+		utils.ResponseWithJson(w, http.StatusOK, map[string]string{"responseBody": "No record found"})
 	}
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// BY USERS
+func GetRestaurantsByUser(w http.ResponseWriter, r *http.Request) {
+	userCtx := middlewares.UserContext(r)
+	//createdBy := userCtx.UserID
+	email := userCtx.Email
+
+	restaurants, err := dbHelper.GetRestaurantHelper() //Get restaurants
+	if err != nil {
+		utils.LogError("Failed to fetch restaurants", err, "User", fmt.Sprintf("%#v", email))
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurants")
+		return
+	}
+
+	//Get the dishes for each restaurants
+	restaurants, err = dbHelper.GetDishesForRestaurantHelper(restaurants)
+	if err != nil {
+		utils.LogError("Failed to fetch restaurant's dishes", err, "Admin", fmt.Sprintf("%#v", email))
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch restaurant's dishes")
+		return
+	}
+
+	utils.ResponseWithJson(w, http.StatusOK, restaurants)
+}
+
+func GetAllDishesByUser(w http.ResponseWriter, r *http.Request) {
+	userCtx := middlewares.UserContext(r)
+	email := userCtx.Email
+
+	dishes, err := dbHelper.GetAllDishesByUserHelper()
+	if err != nil {
+		utils.LogError("Failed to fetch dishes", err, "User", fmt.Sprintf("%#v", email))
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
+		return
+	}
+
+	utils.ResponseWithJson(w, http.StatusOK, dishes)
+}
+
+func GetDishesByRestId(w http.ResponseWriter, r *http.Request) {
+	userCtx := middlewares.UserContext(r)
+	email := userCtx.Email
+	restaurantId := chi.URLParam(r, "restaurantId")
+
+	dishes, err := dbHelper.GetDishesByRestIdHelper(restaurantId)
+	if err != nil {
+		utils.LogError("Failed to fetch dishes", err, "User", fmt.Sprintf("%#v", email))
+		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
+		return
+	}
+
+	utils.ResponseWithJson(w, http.StatusOK, dishes)
 }

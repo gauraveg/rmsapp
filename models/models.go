@@ -36,32 +36,32 @@ type User struct {
 }
 
 type SubAdminRequest struct {
-	Name     string `json:"name" validate:"required"`
+	Name     string `json:"name" validate:"required,UserNameCheck"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"gte=6,lte=15"`
 }
 
 type UserData struct {
-	Name      string        `json:"name" validate:"required"`
+	Name      string        `json:"name" validate:"required,UserNameCheck"`
 	Email     string        `json:"email" validate:"required,email"`
 	Password  string        `json:"password" validate:"gte=6,lte=15"`
-	Role      string        `json:"role"`
+	Role      string        `json:"role" validate:"required,oneof=admin sub-admin user"`
 	Addresses []AddressData `json:"addresses"`
 }
 
 type AddressData struct {
 	Id        *string  `json:"id"`
-	Address   string   `json:"address" validate:"required"`
-	Latitude  *float64 `json:"latitude"`
-	Longitude *float64 `json:"longitude"`
+	Address   string   `json:"address" validate:"required,AddressCheck"`
+	Latitude  *float64 `json:"latitude" validate:"omitnil,number"`
+	Longitude *float64 `json:"longitude" validate:"omitnil,number"`
 	UserId    *string  `json:"userId"`
 	CreatedAt *string  `json:"createdAt"`
 }
 
 type Restaurant struct {
 	Id        string     `json:"id"`
-	Name      string     `json:"name" validate:"required"`
-	Address   string     `json:"address" validate:"required"`
+	Name      string     `json:"name"`
+	Address   string     `json:"address"`
 	Latitude  float64    `json:"latitude"`
 	Longitude float64    `json:"longitude"`
 	Dishes    []DishData `json:"dishes"`
@@ -70,15 +70,15 @@ type Restaurant struct {
 }
 
 type RestaurantsRequest struct {
-	Name      string  `json:"name"`
-	Address   string  `json:"address"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Name      string  `json:"name" validate:"required,UserNameCheck"`
+	Address   string  `json:"address" validate:"required,AddressCheck"`
+	Latitude  float64 `json:"latitude" validate:"omitnil,number"`
+	Longitude float64 `json:"longitude" validate:"omitnil,number"`
 }
 
 type DishRequest struct {
-	Name  string `json:"name" validate:"required"`
-	Price int    `json:"price" validate:"required"`
+	Name  string `json:"name" validate:"required,UserNameCheck"`
+	Price int    `json:"price" validate:"required,number"`
 }
 
 type DishData struct {

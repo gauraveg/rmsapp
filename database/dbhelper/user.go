@@ -55,7 +55,8 @@ func GetUserInfo(payload models.LoginRequest) (string, string, string, error) {
 }
 
 func CreateUserSession(userId string) (string, error) {
-	sqlQuery := `insert into public.user_session (Id, userId) values ($1, $2);`
+	sqlQuery := `insert into public.user_session (Id, userId)
+				 values ($1, $2);`
 	sessionId := uuid.New()
 
 	_, crtErr := database.RmsDB.Exec(sqlQuery, sessionId, userId)
@@ -65,10 +66,12 @@ func CreateUserSession(userId string) (string, error) {
 func FetchUserDetails(sessionId string) (models.SessionData, error) {
 	var userData models.SessionData
 
-	SQL := `select u.email, s.archivedAt from public.user_session s inner join public.users u on s.userId = u.Id
-			where s.Id = $1`
+	sqlQuery := `select u.email, s.archivedAt
+				from public.user_session s
+						inner join public.users u on s.userId = u.Id
+				where s.Id = $1`
 
-	getErr := database.RmsDB.Get(&userData, SQL, sessionId)
+	getErr := database.RmsDB.Get(&userData, sqlQuery, sessionId)
 	return userData, getErr
 }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/gauraveg/rmsapp/middlewares"
 	"github.com/gauraveg/rmsapp/models"
 	"github.com/gauraveg/rmsapp/utils"
-	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
@@ -24,12 +23,9 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Validator to check the payload's required fields
-	validate := validator.New()
-	err = validate.Struct(payload)
-	if err != nil {
-		utils.LogError("Payload's required validation failed.", err, "payload", fmt.Sprintf("%#v", payload))
+	isValid := utils.CheckValidation(payload)
+	if !isValid {
 		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload's required validation failed")
-		return
 	}
 
 	userID, pwdHash, role, userErr := dbHelper.GetUserInfo(payload)
