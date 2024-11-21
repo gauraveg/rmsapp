@@ -1,11 +1,10 @@
 package dbHelper
 
 import (
-	"time"
-
 	"github.com/gauraveg/rmsapp/database"
 	"github.com/gauraveg/rmsapp/models"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 func GetRestaurantById(restaurantId string) (models.Restaurant, error) {
@@ -28,12 +27,12 @@ func IsRestaurantExists(name, address string) (bool, error) {
 	return exists, err
 }
 
-func CreateRestaurantHelper(name string, address string, latitude float64, longitude float64, createdBy string) (string, error) {
+func CreateRestaurantHelper(tx *sqlx.Tx, name string, address string, latitude float64, longitude float64, createdBy string) (string, error) {
 	var restaurantId uuid.UUID
-	sqlQuery := `insert into public.restaurants (Id, name, address, latitude, longitude, createdBy, createdAt) 
-					values ($1, $2, $3, $4, $5, $6, $7) returning Id;`
+	sqlQuery := `insert into public.restaurants (Id, name, address, latitude, longitude, createdBy) 
+					values ($1, $2, $3, $4, $5, $6) returning Id;`
 
-	crtErr := database.RmsDB.Get(&restaurantId, sqlQuery, uuid.New(), name, address, latitude, longitude, createdBy, time.Now())
+	crtErr := tx.Get(&restaurantId, sqlQuery, uuid.New(), name, address, latitude, longitude, createdBy)
 	return restaurantId.String(), crtErr
 }
 
@@ -66,16 +65,4 @@ func GetDishesForRestaurantHelper(resData []models.Restaurant) ([]models.Restaur
 	}
 
 	return resData, err
-}
-
-func GetAllRestsByUserHelper() ([]models.Restaurant, error) {
-	sqlQuery := `select r.Id, r.name, r.address, r.latitude, r.longitude, d.name as dishName, d.price
-				from public.restaurants r
-						inner join public.dishes d on d.restaurantId = r.id
-				where r.archivedAt is null order by r.name`
-
-	restData := make([]models.Restaurant, 0)
-	err := database.RmsDB.Select(&restData, sqlQuery)
-
-	return restData, err
 }

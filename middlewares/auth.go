@@ -3,6 +3,7 @@ package middlewares
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 	"net/http"
 	"os"
 
@@ -19,11 +20,14 @@ const userContext userCon = "userContext"
 func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			logger := LoggerContext(r)
 			tokenString := r.Header.Get("token")
 			if tokenString == "" {
+				logger.Error("No token provided")
 				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "token header missing")
 				return
 			}
+			logger.Info("Parsing JWT token")
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				_, ok := token.Method.(*jwt.SigningMethodHMAC)
 				if !ok {
@@ -32,24 +36,28 @@ func Authenticate(next http.Handler) http.Handler {
 				return []byte(os.Getenv("JWT_SECRET_KEY")), nil
 			})
 			if err != nil || !token.Valid {
+				logger.Error("invalid token", zap.String("Toekn", tokenString))
 				utils.ResponseWithError(w, http.StatusUnauthorized, err, "invalid token")
 				return
 			}
 
 			claimValues, ok := token.Claims.(jwt.MapClaims)
 			if !ok || !token.Valid {
+				logger.Error("invalid token claims")
 				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "invalid token claims")
 				return
 			}
 
 			sessionId := claimValues["sessionId"].(string)
-			userData, err := dbHelper.FetchUserDetails(sessionId)
+			userData, err := dbHelper.FetchUserDataBySessionId(sessionId)
 			if err != nil {
-				utils.ResponseWithError(w, http.StatusInternalServerError, err, "internal server error")
+				logger.Error("Failed to fetch User data using the sessionID", zap.String("sessionId", sessionId))
+				utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch User data using the sessionID")
 				return
 			}
 			if userData.ArchivedAt != nil {
-				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "invalid token")
+				logger.Error("Session is already expired", zap.String("sessionId", sessionId))
+				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "Session is already expired")
 				return
 			}
 

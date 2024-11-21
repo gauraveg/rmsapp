@@ -6,6 +6,7 @@ import (
 	"github.com/gauraveg/rmsapp/database"
 	"github.com/gauraveg/rmsapp/models"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 func GetDishById(dishId string) (models.Dish, error) {
@@ -30,12 +31,12 @@ func IsDishExists(name string, restaurantId string) (bool, error) {
 	return exists, err
 }
 
-func CreateDishHelper(name string, price int, restaurantId string) (string, error) {
+func CreateDishHelper(tx *sqlx.Tx, name string, price int, restaurantId string) (string, error) {
 	var dishId uuid.UUID
-	sqlQuery := `insert into public.dishes (Id, name, price, restaurantId, createdAt) 
-					values ($1, $2, $3, $4, $5) returning Id;`
+	sqlQuery := `insert into public.dishes (Id, name, price, restaurantId) 
+					values ($1, $2, $3, $4) returning Id;`
 
-	crtErr := database.RmsDB.Get(&dishId, sqlQuery, uuid.New(), name, price, restaurantId, time.Now())
+	crtErr := tx.Get(&dishId, sqlQuery, uuid.New(), name, price, restaurantId, time.Now())
 	return dishId.String(), crtErr
 }
 

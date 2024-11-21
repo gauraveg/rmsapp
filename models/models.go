@@ -45,8 +45,20 @@ type UserData struct {
 	Name      string        `json:"name" validate:"required,UserNameCheck"`
 	Email     string        `json:"email" validate:"required,email"`
 	Password  string        `json:"password" validate:"gte=6,lte=15"`
-	Role      string        `json:"role" validate:"required,oneof=admin sub-admin user"`
+	Role      string        `json:"role" validate:"oneof=admin sub-admin user"`
 	Addresses []AddressData `json:"addresses"`
+}
+
+type UserSignUp struct {
+	Name      string        `json:"name" validate:"required,UserNameCheck"`
+	Email     string        `json:"email" validate:"required,email"`
+	Password  string        `json:"password" validate:"gte=6,lte=15"`
+	Addresses []AddressData `json:"addresses"`
+}
+
+type SignUpWithRole struct {
+	UserSignUp
+	Role string
 }
 
 type AddressData struct {

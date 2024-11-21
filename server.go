@@ -16,6 +16,7 @@ type Server struct {
 
 func RmsRouters() *Server {
 	mainRouter := chi.NewRouter()
+	mainRouter.Use(middlewares.Logger)
 	mainRouter.Use(middlewares.CommonMiddleware()...)
 
 	mainRouter.Route("/v1", func(v1 chi.Router) {
@@ -24,7 +25,8 @@ func RmsRouters() *Server {
 				"status": "ok",
 			})
 		})
-		// todo add signup api
+
+		v1.Post("/signup", handlers.UserSignUp)
 		v1.Post("/login", handlers.UserLogin)
 		v1.Group(func(router chi.Router) {
 			router.Use(middlewares.Authenticate)
@@ -36,11 +38,11 @@ func RmsRouters() *Server {
 				admin.Post("/create-user", handlers.CreateUser)
 				admin.Get("/get-users", handlers.GetUsersByAdmin)
 				admin.Post("/create-restaurant", handlers.CreateRestaurant)
-				admin.Get("/get-restaurants", handlers.GetRestaurantsByAdmin)
+				admin.Get("/get-restaurants", handlers.GetRestaurantsByAdminAndUser)
 				admin.Route("/{restaurantId}", func(restId chi.Router) {
 					restId.Post("/create-dish", handlers.CreateDish)
 				})
-				admin.Get("/get-all-dishes", handlers.GetAllDishesByAdmin)
+				admin.Get("/get-all-dishes", handlers.GetAllDishesByAdminAndUser)
 			})
 
 			router.Route("/sub-admin", func(subAdmin chi.Router) {
@@ -57,11 +59,12 @@ func RmsRouters() *Server {
 
 			router.Route("/user", func(user chi.Router) {
 				user.Use(middlewares.ShouldHaveRole("user"))
-				user.Get("/get-all-restaurants", handlers.GetRestaurantsByAdmin)
-				user.Get("/get-all-dishes", handlers.GetAllDishesByAdmin)
+				user.Get("/get-all-restaurants", handlers.GetRestaurantsByAdminAndUser)
+				user.Get("/get-all-dishes", handlers.GetAllDishesByAdminAndUser)
 				user.Route("/{restaurantId}", func(restId chi.Router) {
 					restId.Get("/dishes-by-restaurant", handlers.GetDishesByRestId)
 				})
+				user.Get("/distance", handlers.DistanceBetweenCoords)
 			})
 
 			router.Post("/logout", handlers.UserLogout)

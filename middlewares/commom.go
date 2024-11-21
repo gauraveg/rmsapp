@@ -2,11 +2,10 @@ package middlewares
 
 import (
 	"encoding/json"
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
+	"net/http"
 )
 
 func corsOptions() *cors.Cors {

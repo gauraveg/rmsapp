@@ -23,62 +23,86 @@ func AlphaRegexCheck(value string) bool {
 // 	return isValid
 // }
 
-func CheckValidation(payload interface{}) bool {
+func CheckValidation(payload interface{}, logger *zap.Logger) ([]string, bool) {
 	validate := validator.New()
 	err := validate.RegisterValidation("UserNameCheck", CustomNameValidation)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 	err = validate.RegisterValidation("AddressCheck", CustomAddressValidation)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 	//err = validate.RegisterValidation("NumberCheck", CustomNumValidation)
 
 	err = validate.Struct(payload)
 	if err != nil {
+		errMsg := make([]string, 0)
+		var msg string
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.Field() {
 			case "Name":
-				zap.L().Error("Name validation failed",
+				msg = fmt.Sprintf("The value '%v' is incorrect for name", err.Value())
+				logger.Error("Name validation failed",
 					zap.String("Tag", err.Tag()),
 					zap.String("Type", err.Type().String()),
-					zap.String("Issue", fmt.Sprintf("The value %v is incorrect for name", err.Value())))
+					zap.String("Issue", msg))
+				errMsg = append(errMsg, msg)
 			case "Email":
-				zap.L().Error("Email validation failed",
+				msg = fmt.Sprintf("The value '%v' is incorrect for email", err.Value())
+				logger.Error("Email validation failed",
 					zap.String("Tag", err.Tag()),
 					zap.String("Type", err.Type().String()),
-					zap.String("Issue", fmt.Sprintf("The value %v is incorrect for email", err.Value())))
+					zap.String("Issue", msg))
+				errMsg = append(errMsg, msg)
 			case "Role":
-				zap.L().Error("Role validation failed",
+				msg = fmt.Sprintf("The value '%v' is incorrect. It should be either of these values %v", err.Value(), err.Param())
+				logger.Error("Role validation failed",
 					zap.String("Tag", err.Tag()),
 					zap.String("Type", err.Type().String()),
-					zap.String("Issue", fmt.Sprintf("The value %v is incorrect. It should be either of these values %v", err.Value(), err.Param())))
+					zap.String("Issue", msg))
+				errMsg = append(errMsg, msg)
 			case "Password":
-				zap.L().Error("Password validation failed",
+				msg = fmt.Sprintf("The length for password is incorrect. The length is %v", len(err.Value().(string)))
+				logger.Error("Password validation failed",
 					zap.String("Tag", err.Tag()),
 					zap.String("Type", err.Type().String()),
-					zap.String("Issue", fmt.Sprintf("The length for password is incorrect. The length is %v", len(err.Value().(string)))))
+					zap.String("Issue", msg))
+				errMsg = append(errMsg, msg)
 			case "Address":
-				zap.L().Error("Address validation failed",
+				msg = fmt.Sprintf("The value '%v' is incorrect for address", err.Value())
+				logger.Error("Address validation failed",
 					zap.String("Tag", err.Tag()),
 					zap.String("Type", err.Type().String()),
-					zap.String("Issue", fmt.Sprintf("The value %v is incorrect for address", err.Value())))
+					zap.String("Issue", msg))
+				errMsg = append(errMsg, msg)
 			case "Latitude":
-				zap.L().Error("Latitude validation failed",
+				msg = fmt.Sprintf("The value '%v' is incorrect for latitude", err.Value())
+				logger.Error("Latitude validation failed",
 					zap.String("Tag", err.Tag()),
 					zap.String("Type", err.Type().String()),
-					zap.String("Issue", fmt.Sprintf("The value %v is incorrect for latitude", err.Value())))
+					zap.String("Issue", msg))
+				errMsg = append(errMsg, msg)
 			case "Longitude":
-				zap.L().Error("Longitude validation failed",
+				msg = fmt.Sprintf("The value '%v' is incorrect for longitude", err.Value())
+				logger.Error("Longitude validation failed",
 					zap.String("Tag", err.Tag()),
 					zap.String("Type", err.Type().String()),
-					zap.String("Issue", fmt.Sprintf("The value %v is incorrect for longitude", err.Value())))
+					zap.String("Issue", msg))
+				errMsg = append(errMsg, msg)
 			case "Price":
-				zap.L().Error("Price validation failed",
+				msg = fmt.Sprintf("The value '%v' is incorrect for Price", err.Value())
+				logger.Error("Price validation failed",
 					zap.String("Tag", err.Tag()),
 					zap.String("Type", err.Type().String()),
-					zap.String("Issue", fmt.Sprintf("The value %v is incorrect for Price", err.Value())))
+					zap.String("Issue", msg))
+				errMsg = append(errMsg, msg)
 			}
 		}
 		//LogError("Payload's required validation failed", err, "payload", fmt.Sprintf("%#v", err.(validator.FieldError).Field()))
-		return false
+		return errMsg, false
 	}
-	return true
+	return nil, true
 }
 
 func CustomNameValidation(fl validator.FieldLevel) bool {
