@@ -46,7 +46,7 @@ func Logger(next http.Handler) http.Handler {
 }
 
 func LoggerContext(r *http.Request) *zap.Logger {
-	logger, ok := r.Context().Value("logContext").(*zap.Logger)
+	logger, ok := r.Context().Value(logContext).(*zap.Logger)
 	if !ok {
 		return nil
 	}

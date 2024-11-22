@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gauraveg/rmsapp/models"
 	"net/http"
 
 	"github.com/gauraveg/rmsapp/handlers"
@@ -32,7 +33,7 @@ func RmsRouters() *Server {
 			router.Use(middlewares.Authenticate)
 
 			router.Route("/admin", func(admin chi.Router) {
-				admin.Use(middlewares.ShouldHaveRole("admin"))
+				admin.Use(middlewares.ShouldHaveRole(models.RoleAdmin))
 				admin.Post("/create-sub-admin", handlers.CreateUser)
 				admin.Get("/get-sub-admins", handlers.GetSubAdminsByAdmin)
 				admin.Post("/create-user", handlers.CreateUser)
@@ -46,7 +47,7 @@ func RmsRouters() *Server {
 			})
 
 			router.Route("/sub-admin", func(subAdmin chi.Router) {
-				subAdmin.Use(middlewares.ShouldHaveRole("sub-admin"))
+				subAdmin.Use(middlewares.ShouldHaveRole(models.RoleSubAdmin))
 				subAdmin.Post("/create-user", handlers.CreateUser)
 				subAdmin.Get("/get-users", handlers.GetUsersBySubAdmin)
 				subAdmin.Post("/create-restaurant", handlers.CreateRestaurant)
@@ -58,7 +59,7 @@ func RmsRouters() *Server {
 			})
 
 			router.Route("/user", func(user chi.Router) {
-				user.Use(middlewares.ShouldHaveRole("user"))
+				user.Use(middlewares.ShouldHaveRole(models.RoleUser))
 				user.Get("/get-all-restaurants", handlers.GetRestaurantsByAdminAndUser)
 				user.Get("/get-all-dishes", handlers.GetAllDishesByAdminAndUser)
 				user.Route("/{restaurantId}", func(restId chi.Router) {

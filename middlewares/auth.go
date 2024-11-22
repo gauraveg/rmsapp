@@ -3,9 +3,10 @@ package middlewares
 import (
 	"context"
 	"errors"
-	"go.uber.org/zap"
 	"net/http"
 	"os"
+
+	"go.uber.org/zap"
 
 	dbHelper "github.com/gauraveg/rmsapp/database/dbhelper"
 	"github.com/gauraveg/rmsapp/models"
@@ -36,7 +37,7 @@ func Authenticate(next http.Handler) http.Handler {
 				return []byte(os.Getenv("JWT_SECRET_KEY")), nil
 			})
 			if err != nil || !token.Valid {
-				logger.Error("invalid token", zap.String("Toekn", tokenString))
+				logger.Error("invalid token", zap.String("Token", tokenString))
 				utils.ResponseWithError(w, http.StatusUnauthorized, err, "invalid token")
 				return
 			}
@@ -64,7 +65,7 @@ func Authenticate(next http.Handler) http.Handler {
 			user := &models.UserCtx{
 				UserID:    claimValues["userId"].(string),
 				SessionID: sessionId,
-				Role:      claimValues["role"].(string),
+				Role:      models.Role(claimValues["role"].(string)),
 				Email:     userData.Email,
 			}
 

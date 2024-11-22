@@ -26,7 +26,7 @@ func GetUserInfoForLogin(payload models.LoginRequest) (string, string, string, e
 		return "", "", "", getErr
 	}
 
-	return loginResp.UserID, loginResp.PasswordHash, loginResp.Role, nil
+	return loginResp.UserID, loginResp.PasswordHash, string(loginResp.Role), nil
 }
 
 func CreateUserSession(userId string) (string, error) {
@@ -67,7 +67,7 @@ func CreateUserHelper(tx *sqlx.Tx, email, name, hashPwd, createdBy, role string,
 	crtErr := tx.Get(&userId, sqlQuery, uuid.New(), name, email, hashPwd, role, createdBy, createdBy)
 
 	if crtErr == nil && strings.EqualFold(role, "user") {
-		sqlQuery = `insert into public.addresses ( address, latitude, longitude, userId) 
+		sqlQuery = `insert into public.addresses (Id, address, latitude, longitude, userId) 
 						values ($1, $2, $3, $4, $5) returning Id;`
 
 		for i := range address {
@@ -98,34 +98,40 @@ func CreateSignUpHelper(email, name, hashPwd, role string, address []models.Addr
 	return userId.String(), crtErr
 }
 
-func GetUsersHelper(role string) ([]models.User, error) {
+func GetUserDataHelper(tx *sqlx.Tx, role string) ([]models.User, error) {
 	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt 
 					from public.users where role=$1 and archivedAt is null`
 	userData := make([]models.User, 0)
-	err := database.RmsDB.Select(&userData, sqlQuery, role)
+	err := tx.Select(&userData, sqlQuery, role)
 
 	return userData, err
 }
 
-func GetAddressForUser(userData []models.User) ([]models.User, error) {
+func GetAddressForUserHelper(tx *sqlx.Tx, userData []models.User) ([]models.User, error) {
 	sqlQuery := `select Id, address, latitude, longitude, userId, createdAt 
-							from public.addresses where userId=$1`
+							from public.addresses where archivedAt is NULL`
 
 	var err error
+	addressData := make([]models.AddressData, 0)
+	err = tx.Select(&addressData, sqlQuery)
+
+	addressMap := make(map[string][]models.AddressData)
+	for _, addr := range addressData {
+		addressMap[*addr.UserId] = append(addressMap[*addr.UserId], addr)
+	}
 	for i := range userData {
-		addressData := make([]models.AddressData, 0)
-		err = database.RmsDB.Select(&addressData, sqlQuery, userData[i].ID)
-		userData[i].Address = addressData
+		userAddress := addressMap[userData[i].ID]
+		userData[i].Address = userAddress
 	}
 
 	return userData, err
 }
 
-func GetUsersSubAdminHelper(role, createdBy string) ([]models.User, error) {
+func GetUsersSubAdminHelper(tx *sqlx.Tx, role, createdBy string) ([]models.User, error) {
 	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt 
 					from public.users where role=$1 and createdBy=$2 and archivedAt is null`
 	userData := make([]models.User, 0)
-	err := database.RmsDB.Select(&userData, sqlQuery, role, createdBy)
+	err := tx.Select(&userData, sqlQuery, role, createdBy)
 
 	return userData, err
 }

@@ -39,14 +39,14 @@ func WithTxn(logger *zap.Logger, fn TxFn) error {
 
 	defer func() {
 		if err != nil {
-			logger.Error("Rolling back database transaction")
+			logger.Info("Rolling back database transaction")
 			err := tx.Rollback()
 			if err != nil {
 				logger.Error("Cannot rollback database transaction")
 				return
 			}
 		} else {
-			logger.Error("Committing database transaction")
+			logger.Info("Committing database transaction")
 			err := tx.Commit()
 			if err != nil {
 				logger.Error("Cannot commit database transaction")

@@ -39,7 +39,7 @@ func UserSignUp(w http.ResponseWriter, r *http.Request) {
 	//Password hashing
 	hashedPwd := utils.HashingPwd(payload.Password)
 
-	userId, userEr := dbHelper.CreateSignUpHelper(payload.Email, payload.Name, hashedPwd, payload.Role, payload.Addresses)
+	userId, userEr := dbHelper.CreateSignUpHelper(payload.Email, payload.Name, hashedPwd, string(payload.Role), payload.Addresses)
 	if userEr != nil {
 		logger.Error("Failed to create new user", zap.String("email", payload.Email), zap.Error(userEr))
 		utils.ResponseWithError(w, http.StatusInternalServerError, userEr, "Failed to create new user")

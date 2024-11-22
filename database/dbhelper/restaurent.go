@@ -36,32 +36,37 @@ func CreateRestaurantHelper(tx *sqlx.Tx, name string, address string, latitude f
 	return restaurantId.String(), crtErr
 }
 
-func GetRestaurantHelper() ([]models.Restaurant, error) {
+func GetRestaurantByAdminAndUserHelper(tx *sqlx.Tx) ([]models.Restaurant, error) {
 	sqlQuery := `select Id, name, address, latitude, longitude, createdBy, createdAt
 					from public.restaurants where archivedAt is null`
 	restData := make([]models.Restaurant, 0)
-	err := database.RmsDB.Select(&restData, sqlQuery)
+	err := tx.Select(&restData, sqlQuery)
 
 	return restData, err
 }
 
-func GetRestaurantSubAdminHelper(createdBy string) ([]models.Restaurant, error) {
+func GetRestaurantSubAdminHelper(tx *sqlx.Tx, createdBy string) ([]models.Restaurant, error) {
 	sqlQuery := `select Id, name, address, latitude, longitude, createdBy, createdAt
 					from public.restaurants where createdBy=$1 and archivedAt is null`
 	restData := make([]models.Restaurant, 0)
-	err := database.RmsDB.Select(&restData, sqlQuery, createdBy)
+	err := tx.Select(&restData, sqlQuery, createdBy)
 
 	return restData, err
 }
 
-func GetDishesForRestaurantHelper(resData []models.Restaurant) ([]models.Restaurant, error) {
+func GetDishesForRestaurantHelper(tx *sqlx.Tx, resData []models.Restaurant) ([]models.Restaurant, error) {
 	sqlQuery := `select Id, name, price, restaurantId, createdAt from public.dishes 
-					where restaurantId=$1 and archivedAt is NULL`
-	var err error
+					where archivedAt is NULL`
+	dishData := make([]models.DishData, 0)
+	err := tx.Select(&dishData, sqlQuery)
+
+	dishMap := make(map[string][]models.DishData)
+	for _, dish := range dishData {
+		dishMap[dish.RestaurantId] = append(dishMap[dish.RestaurantId], dish)
+	}
 	for i := range resData {
-		dishData := make([]models.DishData, 0)
-		err = database.RmsDB.Select(&dishData, sqlQuery, resData[i].Id)
-		resData[i].Dishes = dishData
+		restDish := dishMap[resData[i].Id]
+		resData[i].Dishes = restDish
 	}
 
 	return resData, err

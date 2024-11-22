@@ -1,8 +1,6 @@
 package dbHelper
 
 import (
-	"time"
-
 	"github.com/gauraveg/rmsapp/database"
 	"github.com/gauraveg/rmsapp/models"
 	"github.com/google/uuid"
@@ -36,7 +34,7 @@ func CreateDishHelper(tx *sqlx.Tx, name string, price int, restaurantId string) 
 	sqlQuery := `insert into public.dishes (Id, name, price, restaurantId) 
 					values ($1, $2, $3, $4) returning Id;`
 
-	crtErr := tx.Get(&dishId, sqlQuery, uuid.New(), name, price, restaurantId, time.Now())
+	crtErr := tx.Get(&dishId, sqlQuery, uuid.New(), name, price, restaurantId)
 	return dishId.String(), crtErr
 }
 

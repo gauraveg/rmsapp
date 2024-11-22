@@ -3,13 +3,15 @@ package middlewares
 import (
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"net/http"
 
+	"go.uber.org/zap"
+
+	"github.com/gauraveg/rmsapp/models"
 	"github.com/gauraveg/rmsapp/utils"
 )
 
-func ShouldHaveRole(role string) func(http.Handler) http.Handler {
+func ShouldHaveRole(role models.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			logger := LoggerContext(r)

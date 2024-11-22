@@ -1,5 +1,13 @@
 package models
 
+type Role string
+
+const (
+	RoleAdmin    Role = "admin"
+	RoleSubAdmin Role = "sub-admin"
+	RoleUser     Role = "user"
+)
+
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"gte=6,lte=15"`
@@ -13,20 +21,20 @@ type SessionToken struct {
 type LoginData struct {
 	UserID       string `db:"id"`
 	PasswordHash string `db:"password"`
-	Role         string `db:"role"`
+	Role         Role   `db:"role"`
 }
 
 type UserCtx struct {
 	UserID    string `json:"userId"`
 	SessionID string `json:"sessionId"`
-	Role      string `json:"role"`
+	Role      Role   `json:"role"`
 	Email     string `json:"email"`
 }
 
 type User struct {
 	ID        string        `json:"id"`
 	Name      string        `json:"name"`
-	Role      string        `json:"role"`
+	Role      Role          `json:"role"`
 	Email     string        `json:"email"`
 	Address   []AddressData `json:"address"`
 	CreatedBy string        `json:"createdBy"`
@@ -45,8 +53,8 @@ type UserData struct {
 	Name      string        `json:"name" validate:"required,UserNameCheck"`
 	Email     string        `json:"email" validate:"required,email"`
 	Password  string        `json:"password" validate:"gte=6,lte=15"`
-	Role      string        `json:"role" validate:"oneof=admin sub-admin user"`
-	Addresses []AddressData `json:"addresses"`
+	Role      Role          `json:"role" validate:"oneof=admin sub-admin user"`
+	Addresses []AddressData `json:"addresses" validate:"omitnil,dive"`
 }
 
 type UserSignUp struct {
@@ -58,7 +66,7 @@ type UserSignUp struct {
 
 type SignUpWithRole struct {
 	UserSignUp
-	Role string
+	Role Role
 }
 
 type AddressData struct {

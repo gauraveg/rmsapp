@@ -53,7 +53,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	hashedPwd := utils.HashingPwd(payload.Password)
 
 	txErr := database.WithTxn(logger, func(tx *sqlx.Tx) error {
-		_, userEr := dbHelper.CreateUserHelper(tx, payload.Email, payload.Name, hashedPwd, createdBy, payload.Role, payload.Addresses)
+		_, userEr := dbHelper.CreateUserHelper(tx, payload.Email, payload.Name, hashedPwd, createdBy, string(payload.Role), payload.Addresses)
 		if userEr != nil {
 			return userEr
 		}
@@ -149,7 +149,8 @@ func CreateDish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if restExist.CreatedBy == createdBy {
+	roleCheck := string(models.RoleSubAdmin)
+	if restExist.CreatedBy == createdBy || string(userCtx.Role) != roleCheck {
 		exist, err := dbHelper.IsDishExists(payload.Name, restaurantId)
 		if err != nil {
 			logger.Error("Error while finding dishes", zap.Error(err))
