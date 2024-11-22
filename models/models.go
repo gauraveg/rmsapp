@@ -122,3 +122,9 @@ type SessionData struct {
 	Email      string  `json:"email"`
 	ArchivedAt *string `json:"archivedAt"`
 }
+
+type Coordinates struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Address   string  `json:"address"`
+}

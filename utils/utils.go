@@ -2,10 +2,14 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gauraveg/rmsapp/models"
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
@@ -78,4 +82,27 @@ func LogError(errMsg string, err error, key, value string) {
 	zap.L().Error(errMsg,
 		zap.Error(err),
 		zap.String(key, value))
+}
+
+func hsin(value float64) float64 {
+	return math.Pow(math.Sin(value/2), 2)
+}
+
+func CalculateDistBetweenPoints(restPoint []models.Coordinates, userPoint []models.Coordinates) map[string]string {
+	AddrDistance := make(map[string]string)
+	for _, Point := range userPoint {
+		if Point.Address != "" {
+			userLatInRad := (Point.Latitude * math.Pi) / 180
+			userLongInRad := (Point.Longitude * math.Pi) / 180
+
+			restLatInRad := (restPoint[0].Latitude * math.Pi) / 180
+			restLongInRad := (restPoint[0].Longitude * math.Pi) / 180
+
+			earthRadius := float64(6378100)
+			h := hsin(restLatInRad-userLatInRad) + math.Cos(userLatInRad)*math.Cos(restLatInRad)*hsin(restLongInRad-userLongInRad)
+			result := 2 * earthRadius * math.Asin(math.Sqrt(h)) / 1000
+			AddrDistance[Point.Address] = fmt.Sprintf("%.3f km", result)
+		}
+	}
+	return AddrDistance
 }

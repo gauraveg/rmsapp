@@ -3,6 +3,8 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/gauraveg/rmsapp/models"
+
 	"go.uber.org/zap"
 
 	"github.com/gauraveg/rmsapp/database"
@@ -17,7 +19,7 @@ import (
 // BY ADMINS
 func GetUsersByAdmin(w http.ResponseWriter, r *http.Request) {
 	logger := middlewares.LoggerContext(r)
-	role := "user"
+	role := string(models.RoleUser)
 	txErr := database.WithTxn(logger, func(tx *sqlx.Tx) error {
 		userData, err := dbHelper.GetUserDataHelper(tx, role)
 		if err != nil {
@@ -43,7 +45,7 @@ func GetUsersByAdmin(w http.ResponseWriter, r *http.Request) {
 
 func GetSubAdminsByAdmin(w http.ResponseWriter, r *http.Request) {
 	logger := middlewares.LoggerContext(r)
-	role := "sub-admin"
+	role := string(models.RoleSubAdmin)
 	txErr := database.WithTxn(logger, func(tx *sqlx.Tx) error {
 		subAdmins, err := dbHelper.GetUserDataHelper(tx, role)
 		if err != nil {
@@ -100,7 +102,7 @@ func GetAllDishesByAdminAndUser(w http.ResponseWriter, r *http.Request) {
 // BY SUB-ADMINS
 func GetUsersBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	logger := middlewares.LoggerContext(r)
-	role := "user"
+	role := string(models.RoleUser)
 	userCtx := middlewares.UserContext(r)
 	createdBy := userCtx.UserID
 
@@ -170,31 +172,6 @@ func GetAllDishesBySubAdmin(w http.ResponseWriter, r *http.Request) {
 
 // ---------------------------------------------------------------------------------------------------------------
 // BY USERS
-func GetRestaurantsByUser(w http.ResponseWriter, r *http.Request) {
-	logger := middlewares.LoggerContext(r)
-
-	txErr := database.WithTxn(logger, func(tx *sqlx.Tx) error {
-		restaurants, err := dbHelper.GetRestaurantByAdminAndUserHelper(tx) //Get restaurants
-		if err != nil {
-			logger.Error("Failed to fetch restaurants", zap.Error(err))
-			return err
-		}
-		//Get the dishes for each restaurant
-		restaurants, err = dbHelper.GetDishesForRestaurantHelper(tx, restaurants)
-		if err != nil {
-			logger.Error("Failed to fetch restaurant's dishes", zap.Error(err))
-			return err
-		}
-
-		utils.ResponseWithJson(w, http.StatusOK, restaurants)
-		return nil
-	})
-	if txErr != nil {
-		logger.Error("Failed in database transaction", zap.Error(txErr))
-		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
-		return
-	}
-}
 
 func GetDishesByRestId(w http.ResponseWriter, r *http.Request) {
 	logger := middlewares.LoggerContext(r)
@@ -211,5 +188,33 @@ func GetDishesByRestId(w http.ResponseWriter, r *http.Request) {
 }
 
 func DistanceBetweenCoords(w http.ResponseWriter, r *http.Request) {
-	// todo
+	logger := middlewares.LoggerContext(r)
+	restaurantId := chi.URLParam(r, "restaurantId")
+	userCtx := middlewares.UserContext(r)
+	userId := userCtx.UserID
+	var err error
+	var restPoint []models.Coordinates
+	var userPoint []models.Coordinates
+
+	txErr := database.WithTxn(logger, func(tx *sqlx.Tx) error {
+		restPoint, err = dbHelper.GetRestLatitudeAndLongitude(tx, restaurantId)
+		if err != nil {
+			logger.Error("Failed to fetch restaurant's latitude and longitude", zap.Error(err))
+			return err
+		}
+
+		userPoint, err = dbHelper.GetUserLatitudeAndLongitude(tx, userId)
+		if err != nil {
+			logger.Error("Failed to fetch User's latitude and longitude", zap.Error(err))
+			return err
+		}
+		return nil
+	})
+	if txErr != nil {
+		logger.Error("Failed in database transaction", zap.Error(txErr))
+		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
+		return
+	}
+	distance := utils.CalculateDistBetweenPoints(restPoint, userPoint)
+	utils.ResponseWithJson(w, http.StatusOK, distance)
 }

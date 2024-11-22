@@ -66,7 +66,7 @@ func CreateUserHelper(tx *sqlx.Tx, email, name, hashPwd, createdBy, role string,
 	userId = uuid.New()
 	crtErr := tx.Get(&userId, sqlQuery, uuid.New(), name, email, hashPwd, role, createdBy, createdBy)
 
-	if crtErr == nil && strings.EqualFold(role, "user") {
+	if crtErr == nil && strings.EqualFold(role, string(models.RoleUser)) {
 		sqlQuery = `insert into public.addresses (Id, address, latitude, longitude, userId) 
 						values ($1, $2, $3, $4, $5) returning Id;`
 
@@ -86,7 +86,7 @@ func CreateSignUpHelper(email, name, hashPwd, role string, address []models.Addr
 	userId = uuid.New()
 	crtErr := database.RmsDB.Get(&userId, sqlQuery, userId, name, email, hashPwd, role, userId, time.Now(), userId, time.Now())
 
-	if crtErr == nil && strings.EqualFold(role, "user") {
+	if crtErr == nil && strings.EqualFold(role, string(models.RoleUser)) {
 		sqlQuery = `insert into public.addresses (Id, address, latitude, longitude, userId, createdAt) 
 						values ($1, $2, $3, $4, $5, $6) returning Id;`
 
@@ -134,4 +134,14 @@ func GetUsersSubAdminHelper(tx *sqlx.Tx, role, createdBy string) ([]models.User,
 	err := tx.Select(&userData, sqlQuery, role, createdBy)
 
 	return userData, err
+}
+
+func GetUserLatitudeAndLongitude(tx *sqlx.Tx, userId string) ([]models.Coordinates, error) {
+	sqlQuery := `select a.latitude, a.longitude, a.address
+				from public.addresses a
+						inner join public.users u on u.id = a.userid
+				where u.Id = $1`
+	coordinates := make([]models.Coordinates, 0)
+	err := tx.Select(&coordinates, sqlQuery, userId)
+	return coordinates, err
 }

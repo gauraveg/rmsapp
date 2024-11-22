@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/gauraveg/rmsapp/models"
 	"net/http"
+
+	"github.com/gauraveg/rmsapp/models"
 
 	"github.com/gauraveg/rmsapp/handlers"
 	"github.com/gauraveg/rmsapp/middlewares"
@@ -64,8 +65,8 @@ func RmsRouters() *Server {
 				user.Get("/get-all-dishes", handlers.GetAllDishesByAdminAndUser)
 				user.Route("/{restaurantId}", func(restId chi.Router) {
 					restId.Get("/dishes-by-restaurant", handlers.GetDishesByRestId)
+					restId.Get("/distance-from-user", handlers.DistanceBetweenCoords)
 				})
-				user.Get("/distance", handlers.DistanceBetweenCoords)
 			})
 
 			router.Post("/logout", handlers.UserLogout)

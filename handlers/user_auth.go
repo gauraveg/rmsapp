@@ -26,7 +26,7 @@ func UserSignUp(w http.ResponseWriter, r *http.Request) {
 
 	payload := models.SignUpWithRole{
 		UserSignUp: signUpData,
-		Role:       "user",
+		Role:       models.RoleUser,
 	}
 
 	//Validator to check the payload's required fields

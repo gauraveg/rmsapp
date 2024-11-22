@@ -71,3 +71,10 @@ func GetDishesForRestaurantHelper(tx *sqlx.Tx, resData []models.Restaurant) ([]m
 
 	return resData, err
 }
+
+func GetRestLatitudeAndLongitude(tx *sqlx.Tx, restaurantId string) ([]models.Coordinates, error) {
+	sqlQuery := `select latitude, longitude from public.restaurants where Id=$1`
+	coordinates := make([]models.Coordinates, 0)
+	err := tx.Select(&coordinates, sqlQuery, restaurantId)
+	return coordinates, err
+}

@@ -7,21 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func GetDishById(dishId string) (models.Dish, error) {
-	sqlQuery := `select d.Id, d.name, d.price, d.restaurantId, r.name as restaurantName, d.createdAt
-					from public.dishes d inner join public.restaurants r
-					on r.Id = d.restaurantId 
-					where d.Id = $1 and d.archivedAt is null`
-
-	var dishData models.Dish
-	getErr := database.RmsDB.Get(&dishData, sqlQuery, dishId)
-	if getErr != nil {
-		return dishData, getErr
-	}
-
-	return dishData, nil
-}
-
 func IsDishExists(name string, restaurantId string) (bool, error) {
 	sqlQuery := `select count(Id) > 0 as isExists from public.dishes where name=$1 and restaurantId=$2 and archivedAt is null`
 	var exists bool
@@ -56,17 +41,6 @@ func GetAllDishSubAdminHelper(createdBy string) ([]models.Dish, error) {
 					where d.archivedAt is null and r.createdBy = $1`
 	dishData := make([]models.Dish, 0)
 	err := database.RmsDB.Select(&dishData, sqlQuery, createdBy)
-
-	return dishData, err
-}
-
-func GetAllDishesByUserHelper() ([]models.Dish, error) {
-	sqlQuery := `select d.Id, d.name, d.price, d.restaurantId, r.name as restaurantName, d.createdAt
-				from public.dishes d inner join public.restaurants r
-				on r.Id = d.restaurantId 
-				where d.archivedAt is null`
-	dishData := make([]models.Dish, 0)
-	err := database.RmsDB.Select(&dishData, sqlQuery)
 
 	return dishData, err
 }
