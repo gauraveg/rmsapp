@@ -36,29 +36,29 @@ func CreateRestaurantHelper(tx *sqlx.Tx, name string, address string, latitude f
 	return restaurantId.String(), crtErr
 }
 
-func GetRestaurantByAdminAndUserHelper(tx *sqlx.Tx) ([]models.Restaurant, error) {
+func GetRestaurantByAdminAndUserHelper() ([]models.Restaurant, error) {
 	sqlQuery := `select Id, name, address, latitude, longitude, createdBy, createdAt
 					from public.restaurants where archivedAt is null`
 	restData := make([]models.Restaurant, 0)
-	err := tx.Select(&restData, sqlQuery)
+	err := database.RmsDB.Select(&restData, sqlQuery)
 
 	return restData, err
 }
 
-func GetRestaurantSubAdminHelper(tx *sqlx.Tx, createdBy string) ([]models.Restaurant, error) {
+func GetRestaurantSubAdminHelper(createdBy string) ([]models.Restaurant, error) {
 	sqlQuery := `select Id, name, address, latitude, longitude, createdBy, createdAt
 					from public.restaurants where createdBy=$1 and archivedAt is null`
 	restData := make([]models.Restaurant, 0)
-	err := tx.Select(&restData, sqlQuery, createdBy)
+	err := database.RmsDB.Select(&restData, sqlQuery, createdBy)
 
 	return restData, err
 }
 
-func GetDishesForRestaurantHelper(tx *sqlx.Tx, resData []models.Restaurant) ([]models.Restaurant, error) {
+func GetDishesForRestaurantHelper(resData []models.Restaurant) ([]models.Restaurant, error) {
 	sqlQuery := `select Id, name, price, restaurantId, createdAt from public.dishes 
 					where archivedAt is NULL`
 	dishData := make([]models.DishData, 0)
-	err := tx.Select(&dishData, sqlQuery)
+	err := database.RmsDB.Select(&dishData, sqlQuery)
 
 	dishMap := make(map[string][]models.DishData)
 	for _, dish := range dishData {
@@ -72,9 +72,9 @@ func GetDishesForRestaurantHelper(tx *sqlx.Tx, resData []models.Restaurant) ([]m
 	return resData, err
 }
 
-func GetRestLatitudeAndLongitude(tx *sqlx.Tx, restaurantId string) ([]models.Coordinates, error) {
+func GetRestLatitudeAndLongitude(restaurantId string) ([]models.Coordinates, error) {
 	sqlQuery := `select latitude, longitude from public.restaurants where Id=$1`
 	coordinates := make([]models.Coordinates, 0)
-	err := tx.Select(&coordinates, sqlQuery, restaurantId)
+	err := database.RmsDB.Select(&coordinates, sqlQuery, restaurantId)
 	return coordinates, err
 }

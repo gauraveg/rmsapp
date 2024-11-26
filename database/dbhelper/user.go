@@ -105,22 +105,22 @@ func CreateSignUpHelper(email, name, hashPwd, role string, address []models.Addr
 	return userId.String(), crtErr
 }
 
-func GetUserDataHelper(tx *sqlx.Tx, role string) ([]models.User, error) {
+func GetUserDataHelper(role string) ([]models.User, error) {
 	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt 
 					from public.users where role=$1 and archivedAt is null`
 	userData := make([]models.User, 0)
-	err := tx.Select(&userData, sqlQuery, role)
+	err := database.RmsDB.Select(&userData, sqlQuery, role)
 
 	return userData, err
 }
 
-func GetAddressForUserHelper(tx *sqlx.Tx, userData []models.User) ([]models.User, error) {
+func GetAddressForUserHelper(userData []models.User) ([]models.User, error) {
 	sqlQuery := `select Id, address, latitude, longitude, userId, createdAt 
 							from public.addresses where archivedAt is NULL`
 
 	var err error
 	addressData := make([]models.AddressData, 0)
-	err = tx.Select(&addressData, sqlQuery)
+	err = database.RmsDB.Select(&addressData, sqlQuery)
 
 	addressMap := make(map[string][]models.AddressData)
 	for _, addr := range addressData {
@@ -134,22 +134,22 @@ func GetAddressForUserHelper(tx *sqlx.Tx, userData []models.User) ([]models.User
 	return userData, err
 }
 
-func GetUsersSubAdminHelper(tx *sqlx.Tx, role, createdBy string) ([]models.User, error) {
+func GetUsersSubAdminHelper(role, createdBy string) ([]models.User, error) {
 	sqlQuery := `select Id, name, email, role, createdBy, createdAt, updatedBy, updatedAt 
 					from public.users where role=$1 and createdBy=$2 and archivedAt is null`
 	userData := make([]models.User, 0)
-	err := tx.Select(&userData, sqlQuery, role, createdBy)
+	err := database.RmsDB.Select(&userData, sqlQuery, role, createdBy)
 
 	return userData, err
 }
 
-func GetUserLatitudeAndLongitude(tx *sqlx.Tx, userId string) ([]models.Coordinates, error) {
+func GetUserLatitudeAndLongitude(userId string) ([]models.Coordinates, error) {
 	sqlQuery := `select a.latitude, a.longitude, a.address
 				from public.addresses a
 						inner join public.users u on u.id = a.userid
 				where u.Id = $1`
 	coordinates := make([]models.Coordinates, 0)
-	err := tx.Select(&coordinates, sqlQuery, userId)
+	err := database.RmsDB.Select(&coordinates, sqlQuery, userId)
 	return coordinates, err
 }
 

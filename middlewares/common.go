@@ -48,17 +48,19 @@ func CommonMiddleware(loggers *logger.ZapLogger) chi.Middlewares {
 				r = r.WithContext(context.WithValue(r.Context(), "logContext", loggers))
 
 				//Logging the request body and adding the payload to context
-				if body, err := io.ReadAll(r.Body); err == nil {
-					payload := string(body)
-					r = r.WithContext(context.WithValue(r.Context(), "payload", payload))
-					var reqBody map[string]interface{}
-					err := json.Unmarshal([]byte(payload), &reqBody)
-					if err != nil {
-						loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to unmarhsal request body", "error": err.Error()})
-						return
+				body, err := io.ReadAll(r.Body)
+				if err == nil {
+					if payload := string(body); payload != "" {
+						r = r.WithContext(context.WithValue(r.Context(), "payload", payload))
+						var reqBody map[string]interface{}
+						err := json.Unmarshal([]byte(payload), &reqBody)
+						if err != nil {
+							loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to unmarhsal request body", "error": err.Error()})
+							return
+						}
+						delete(reqBody, "password")
+						loggers.InfoWithContext(r.Context(), map[string]string{"requestBody": fmt.Sprintf("%v", reqBody)})
 					}
-					delete(reqBody, "password")
-					loggers.InfoWithContext(r.Context(), map[string]string{"requestBody": fmt.Sprintf("%v", reqBody)})
 				}
 
 				next.ServeHTTP(w, r)
