@@ -32,12 +32,12 @@ func GetUsersByAdmin(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		utils.ResponseWithJson(w, http.StatusOK, userData)
+		utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, userData)
 		return nil
 	})
 	if txErr != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction", "error": txErr.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, txErr, "Failed in database transaction")
 		return
 	}
 }
@@ -51,12 +51,12 @@ func GetSubAdminsByAdmin(w http.ResponseWriter, r *http.Request) {
 			loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to fetch sub-admins", "error": err.Error()})
 			return err
 		}
-		utils.ResponseWithJson(w, http.StatusOK, subAdmins)
+		utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, subAdmins)
 		return nil
 	})
 	if txErr != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction", "error": txErr.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, txErr, "Failed in database transaction")
 		return
 	}
 }
@@ -75,12 +75,12 @@ func GetRestaurantsByAdminAndUser(w http.ResponseWriter, r *http.Request) {
 			loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to fetch restaurant's dishes", "error": err.Error()})
 			return err
 		}
-		utils.ResponseWithJson(w, http.StatusOK, restaurants)
+		utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, restaurants)
 		return nil
 	})
 	if txErr != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction", "error": txErr.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, txErr, "Failed in database transaction")
 		return
 	}
 }
@@ -90,11 +90,11 @@ func GetAllDishesByAdminAndUser(w http.ResponseWriter, r *http.Request) {
 	dishes, err := dbHelper.GetAllDishHelper()
 	if err != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to fetch dishes", "error": err.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, err, "Failed to fetch dishes")
 		return
 	}
 
-	utils.ResponseWithJson(w, http.StatusOK, dishes)
+	utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, dishes)
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -117,12 +117,12 @@ func GetUsersBySubAdmin(w http.ResponseWriter, r *http.Request) {
 			loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to fetch user's address", "error": err.Error()})
 			return err
 		}
-		utils.ResponseWithJson(w, http.StatusOK, userData)
+		utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, userData)
 		return nil
 	})
 	if txErr != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction", "error": txErr.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, txErr, "Failed in database transaction")
 		return
 	}
 }
@@ -144,12 +144,12 @@ func GetRestaurantsBySubAdmin(w http.ResponseWriter, r *http.Request) {
 			loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to fetch restaurant's dishes", "error": err.Error()})
 			return err
 		}
-		utils.ResponseWithJson(w, http.StatusOK, restaurants)
+		utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, restaurants)
 		return nil
 	})
 	if txErr != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction", "error": txErr.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, txErr, "Failed in database transaction")
 		return
 	}
 }
@@ -162,11 +162,11 @@ func GetAllDishesBySubAdmin(w http.ResponseWriter, r *http.Request) {
 	dishes, err := dbHelper.GetAllDishSubAdminHelper(createdBy)
 	if err != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to fetch dishes", "error": err.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, err, "Failed to fetch dishes")
 		return
 	}
 
-	utils.ResponseWithJson(w, http.StatusOK, dishes)
+	utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, dishes)
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -179,11 +179,11 @@ func GetDishesByRestId(w http.ResponseWriter, r *http.Request) {
 	dishes, err := dbHelper.GetDishesByRestIdHelper(restaurantId)
 	if err != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to fetch dishes", "error": err.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch dishes")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, err, "Failed to fetch dishes")
 		return
 	}
 
-	utils.ResponseWithJson(w, http.StatusOK, dishes)
+	utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, dishes)
 }
 
 func DistanceBetweenCoords(w http.ResponseWriter, r *http.Request) {
@@ -211,9 +211,9 @@ func DistanceBetweenCoords(w http.ResponseWriter, r *http.Request) {
 	})
 	if txErr != nil {
 		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction", "userId": userId, "error": txErr.Error()})
-		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
+		utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, txErr, "Failed in database transaction")
 		return
 	}
 	distance := utils.CalculateDistBetweenPoints(restPoint, userPoint)
-	utils.ResponseWithJson(w, http.StatusOK, distance)
+	utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, distance)
 }

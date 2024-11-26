@@ -23,23 +23,23 @@ func main() {
 
 	err = database.ConnectDB(dbUrl)
 	if err != nil {
-		loggers.Info("Failed to connect to database with error: %+v", err)
-		loggers.Error("Failed to connect to database", zap.Error(err))
+		loggers.Info(loggers.Logger, "Failed to connect to database with error: %+v", err)
+		loggers.Error(loggers.Logger, "Failed to connect to database", zap.Error(err))
 		return
 	}
-	loggers.Info("Db connection successful!")
+	loggers.Info(loggers.Logger, "Db connection successful!")
 
 	srv := RmsRouters(loggers)
-	loggers.Info("Server has started at PORT %v", port)
+	loggers.Info(loggers.Logger, "Server has started at PORT %v", port)
 	err = srv.Run(port)
 	if err != nil {
-		loggers.Error("Failed to run server. Error: %v", err)
+		loggers.Error(loggers.Logger, "Failed to run server. Error: %v", err)
 		return
 	}
 
 	err = database.ShutdownDatabase()
 	if err != nil {
-		loggers.Error("failed to close database connection. Error: %v", err)
+		loggers.Error(loggers.Logger, "failed to close database connection. Error: %v", err)
 		return
 	}
 }

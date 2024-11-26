@@ -3,13 +3,13 @@ package middlewares
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gauraveg/rmsapp/logger"
-	"github.com/google/uuid"
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/rs/cors"
-	"go.uber.org/zap"
+	"io"
+	"net/http"
 )
 
 func corsOptions() *cors.Cors {
@@ -36,7 +36,7 @@ func CommonMiddleware(loggers *logger.ZapLogger) chi.Middlewares {
 				defer func(loggers *logger.ZapLogger) {
 					err := loggers.Logger.Sync()
 					if err != nil {
-						loggers.Error(err.Error())
+						loggers.ErrorWithContext(r.Context(), err.Error())
 						return
 					}
 				}(loggers)
@@ -46,6 +46,21 @@ func CommonMiddleware(loggers *logger.ZapLogger) chi.Middlewares {
 					r = r.WithContext(context.WithValue(r.Context(), "requestId", requestId))
 				}
 				r = r.WithContext(context.WithValue(r.Context(), "logContext", loggers))
+
+				//Logging the request body and adding the payload to context
+				if body, err := io.ReadAll(r.Body); err == nil {
+					payload := string(body)
+					r = r.WithContext(context.WithValue(r.Context(), "payload", payload))
+					var reqBody map[string]interface{}
+					err := json.Unmarshal([]byte(payload), &reqBody)
+					if err != nil {
+						loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to unmarhsal request body", "error": err.Error()})
+						return
+					}
+					delete(reqBody, "password")
+					loggers.InfoWithContext(r.Context(), map[string]string{"requestBody": fmt.Sprintf("%v", reqBody)})
+				}
+
 				next.ServeHTTP(w, r)
 			})
 		},
@@ -59,10 +74,10 @@ func CommonMiddleware(loggers *logger.ZapLogger) chi.Middlewares {
 						})
 						w.Header().Set("Content-Type", "application/json")
 						w.WriteHeader(http.StatusInternalServerError)
-						zap.L().Error("Request Panic err", zap.String("error", err.(string)))
+						loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Request Panic err", "error": err.(string)})
 						_, err := w.Write(jsonBody)
 						if err != nil {
-							zap.L().Error("Failed to send response from middleware", zap.Error(err))
+							loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed to send response from middleware", "error": err.Error()})
 						}
 					}
 				}()

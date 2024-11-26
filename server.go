@@ -24,7 +24,7 @@ func RmsRouters(loggers *logger.ZapLogger) *Server {
 
 	mainRouter.Route("/v1", func(v1 chi.Router) {
 		v1.Get("/check", func(w http.ResponseWriter, r *http.Request) {
-			utils.ResponseWithJson(w, http.StatusOK, map[string]string{
+			utils.ResponseWithJson(r.Context(), loggers, w, http.StatusOK, map[string]string{
 				"status": "ok",
 			})
 		})

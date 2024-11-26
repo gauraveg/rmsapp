@@ -24,7 +24,7 @@ func Authenticate(next http.Handler) http.Handler {
 			tokenString := r.Header.Get("token")
 			if tokenString == "" {
 				loggers.ErrorWithContext(r.Context(), "No token provided")
-				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "token header missing")
+				utils.ResponseWithError(r.Context(), loggers, w, http.StatusUnauthorized, nil, "token header missing")
 				return
 			}
 			loggers.InfoWithContext(r.Context(), "Parsing JWT token")
@@ -37,14 +37,14 @@ func Authenticate(next http.Handler) http.Handler {
 			})
 			if err != nil || !token.Valid {
 				loggers.ErrorWithContext(r.Context(), map[string]string{"message": "invalid token", "Token": tokenString})
-				utils.ResponseWithError(w, http.StatusUnauthorized, err, "invalid token")
+				utils.ResponseWithError(r.Context(), loggers, w, http.StatusUnauthorized, err, "invalid token")
 				return
 			}
 
 			claimValues, ok := token.Claims.(jwt.MapClaims)
 			if !ok || !token.Valid {
 				loggers.ErrorWithContext(r.Context(), map[string]string{"message": "invalid token claims", "Token": tokenString})
-				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "invalid token claims")
+				utils.ResponseWithError(r.Context(), loggers, w, http.StatusUnauthorized, nil, "invalid token claims")
 				return
 			}
 
@@ -52,12 +52,12 @@ func Authenticate(next http.Handler) http.Handler {
 			userData, err := dbHelper.FetchUserDataBySessionId(sessionId)
 			if err != nil {
 				loggers.ErrorWithContext(r.Context(), map[string]string{"message": "failed to fetch User data using the sessionId", "sessionId": sessionId})
-				utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch User data using the sessionID")
+				utils.ResponseWithError(r.Context(), loggers, w, http.StatusInternalServerError, err, "Failed to fetch User data using the sessionID")
 				return
 			}
 			if userData.ArchivedAt != nil {
 				loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Session is already expired", "sessionId": sessionId})
-				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "Session is already expired")
+				utils.ResponseWithError(r.Context(), loggers, w, http.StatusUnauthorized, nil, "Session is already expired")
 				return
 			}
 

@@ -19,7 +19,7 @@ func ShouldHaveRole(role models.Role) func(http.Handler) http.Handler {
 				w.WriteHeader(http.StatusForbidden)
 				msg := fmt.Sprintf("endpoint forbidden. Cannot access this endpoint as %v", userRole)
 				loggers.ErrorWithContext(r.Context(), msg)
-				utils.ResponseWithError(w, http.StatusBadRequest, errors.New("endpoint forbidden"), msg)
+				utils.ResponseWithError(r.Context(), loggers, w, http.StatusBadRequest, errors.New("endpoint forbidden"), msg)
 				return
 			}
 			next.ServeHTTP(w, r)

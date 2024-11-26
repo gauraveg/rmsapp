@@ -24,6 +24,21 @@ func AlphaRegexCheck(value string) bool {
 // 	return isValid
 // }
 
+func CustomNameValidation(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return AlphaRegexCheck(value)
+}
+
+func CustomAddressValidation(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return AlphaNumRegexCheck(value)
+}
+
+// func CustomNumValidation(fl validator.FieldLevel) bool {
+// 	value := fl.Field().String()
+// 	return NumRegexCheck(value)
+// }
+
 func CheckValidation(ctx context.Context, payload interface{}, loggers *logger.ZapLogger) ([]string, bool) {
 	validate := validator.New()
 	err := validate.RegisterValidation("UserNameCheck", CustomNameValidation)
@@ -81,18 +96,3 @@ func CheckValidation(ctx context.Context, payload interface{}, loggers *logger.Z
 	}
 	return nil, true
 }
-
-func CustomNameValidation(fl validator.FieldLevel) bool {
-	value := fl.Field().String()
-	return AlphaRegexCheck(value)
-}
-
-func CustomAddressValidation(fl validator.FieldLevel) bool {
-	value := fl.Field().String()
-	return AlphaNumRegexCheck(value)
-}
-
-// func CustomNumValidation(fl validator.FieldLevel) bool {
-// 	value := fl.Field().String()
-// 	return NumRegexCheck(value)
-// }

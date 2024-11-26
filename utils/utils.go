@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gauraveg/rmsapp/logger"
 	"io"
 	"math"
 	"net/http"
@@ -16,26 +18,30 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func ResponseWithJson(w http.ResponseWriter, code int, payload interface{}) {
+func ResponseWithJson(ctx context.Context, loggers *logger.ZapLogger, w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 	if payload != nil {
 		err := json.NewEncoder(w).Encode(payload)
 		if err != nil {
-			zap.L().Error("Cannot parse payload", zap.Error(err))
+			loggers.ErrorWithContext(ctx, map[string]string{"message": "cannot parse payload"})
 			return
 		}
 	}
+
+	if code == 200 || code == 201 {
+		loggers.InfoWithContext(ctx, map[string]interface{}{"message": "response parsed successfully", "response": payload})
+	}
 }
 
-func ResponseWithError(w http.ResponseWriter, code int, err error, msg string) {
-	//zap.L().Error("Exception occurred", zap.Error(err))
+func ResponseWithError(ctx context.Context, loggers *logger.ZapLogger, w http.ResponseWriter, code int, err error, msg string) {
+	loggers.ErrorWithContext(ctx, map[string]string{"message": msg, "error": err.Error()})
 	if code > 499 {
 		zap.L().Error("Responding with 5XX error", zap.Error(err))
 	}
 	type errorResponse struct {
 		Error string `json:"error"`
 	}
-	ResponseWithJson(w, code, errorResponse{
+	ResponseWithJson(ctx, loggers, w, code, errorResponse{
 		Error: msg,
 	})
 }
@@ -100,3 +106,10 @@ func CalculateDistBetweenPoints(restPoint []models.Coordinates, userPoint []mode
 	}
 	return AddrDistance
 }
+
+//func GetPayload(ctx context.Context) (map[string]interface{}, error) {
+//	body, _ := ctx.Value("payload").(map[string]interface{})
+//	jsonBody, _ := json.Marshal(body)
+//	err := json.Unmarshal(jsonBody, &payload)
+//	return payload, err
+//}

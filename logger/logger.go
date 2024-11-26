@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type ZapLogger struct {
@@ -40,9 +39,6 @@ func Init() *ZapLogger {
 	config.EncoderConfig.CallerKey = "caller"
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.StacktraceKey = "stacktrace"
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
 
 	config.OutputPaths = []string{"stdout"}
 	logger, err := config.Build()
@@ -55,11 +51,10 @@ func Init() *ZapLogger {
 	}
 }
 
-func (l *ZapLogger) WithContext(ctx context.Context) {
-	if ctx != nil {
-		requestId := ctx.Value("requestId").(string)
-		l.Logger = l.Logger.With(zap.String("requestId", requestId))
-	}
+func (l *ZapLogger) WithContext(ctx context.Context) *zap.Logger {
+	requestId := ctx.Value("requestId").(string)
+	childlog := l.Logger.With(zap.String("requestId", requestId))
+	return childlog
 }
 
 func (l *ZapLogger) DebugWithContext(context context.Context, args ...interface{}) {
@@ -72,12 +67,12 @@ func (l *ZapLogger) Debug(args ...interface{}) {
 }
 
 func (l *ZapLogger) InfoWithContext(context context.Context, args ...interface{}) {
-	l.WithContext(context)
-	l.Info(args...)
+	childlog := l.WithContext(context)
+	l.Info(childlog, args)
 }
 
-func (l *ZapLogger) Info(args ...interface{}) {
-	l.Logger.Info(strconv.Itoa(int(zap.InfoLevel)), zap.Any("args", args))
+func (l *ZapLogger) Info(childlog *zap.Logger, args ...interface{}) {
+	childlog.Info(strconv.Itoa(int(zap.InfoLevel)), zap.Any("args", args))
 }
 
 func (l *ZapLogger) WarnWithContext(context context.Context, args ...interface{}) {
@@ -86,16 +81,16 @@ func (l *ZapLogger) WarnWithContext(context context.Context, args ...interface{}
 }
 
 func (l *ZapLogger) Warn(args ...interface{}) {
-	l.Logger.Info(strconv.Itoa(int(zap.WarnLevel)), zap.Any("args", args))
+	l.Logger.Warn(strconv.Itoa(int(zap.WarnLevel)), zap.Any("args", args))
 }
 
 func (l *ZapLogger) ErrorWithContext(context context.Context, args ...interface{}) {
-	l.WithContext(context)
-	l.Error(args...)
+	childlog := l.WithContext(context)
+	l.Error(childlog, args)
 }
 
-func (l *ZapLogger) Error(args ...interface{}) {
-	l.Logger.Error(strconv.Itoa(int(zap.ErrorLevel)), zap.Any("args", args))
+func (l *ZapLogger) Error(childlog *zap.Logger, args ...interface{}) {
+	childlog.Error(strconv.Itoa(int(zap.ErrorLevel)), zap.Any("args", args))
 }
 
 func (l *ZapLogger) FatalWithContext(context context.Context, args ...interface{}) {
@@ -104,7 +99,7 @@ func (l *ZapLogger) FatalWithContext(context context.Context, args ...interface{
 }
 
 func (l *ZapLogger) Fatal(args ...interface{}) {
-	l.Logger.Error(strconv.Itoa(int(zap.FatalLevel)), zap.Any("args", args))
+	l.Logger.Fatal(strconv.Itoa(int(zap.FatalLevel)), zap.Any("args", args))
 }
 
 // LogWrapperInit Initiate the logger and wrap
