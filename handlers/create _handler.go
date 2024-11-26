@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gauraveg/rmsapp/logger"
+
 	"github.com/gauraveg/rmsapp/database"
 	dbHelper "github.com/gauraveg/rmsapp/database/dbhelper"
 	"github.com/gauraveg/rmsapp/middlewares"
@@ -13,24 +15,23 @@ import (
 	"github.com/gauraveg/rmsapp/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 )
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var payload models.UserData
-	logger := middlewares.LoggerContext(r)
+	loggers := logger.GetLogContext(r)
 	userCtx := middlewares.UserContext(r)
 	createdBy := userCtx.UserID
 
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
-		logger.Error("Payload cannot be parsed. Check the payload", zap.Error(err))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Payload cannot be parsed. Check the payload"})
 		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload cannot be parsed. Check the payload")
 		return
 	}
 
 	//Validator to check the payload's required fields
-	errMsg, isValid := utils.CheckValidation(payload, logger)
+	errMsg, isValid := utils.CheckValidation(r.Context(), payload, loggers)
 	if !isValid {
 		utils.ResponseWithError(w, http.StatusBadRequest, err, strings.Join(errMsg, "|"))
 		return
@@ -39,12 +40,12 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	//Check if the user with the email exists in system or not
 	exist, err := dbHelper.IsUserExists(payload.Email)
 	if err != nil {
-		logger.Error("Error while finding user", zap.String("email", payload.Email), zap.Error(err))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Error while finding user", "email": payload.Email, "error": err.Error()})
 		utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding user")
 		return
 	}
 	if exist {
-		logger.Error("User Already Exists", zap.String("email", payload.Email), zap.Error(err))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "User Already Exists", "email": payload.Email})
 		utils.ResponseWithError(w, http.StatusConflict, nil, "User Already Exists")
 		return
 	}
@@ -52,7 +53,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	//Password hashing
 	hashedPwd := utils.HashingPwd(payload.Password)
 
-	txErr := database.WithTxn(logger, func(tx *sqlx.Tx) error {
+	txErr := database.WithTxn(r.Context(), loggers, func(tx *sqlx.Tx) error {
 		_, userEr := dbHelper.CreateUserHelper(tx, payload.Email, payload.Name, hashedPwd, createdBy, string(payload.Role), payload.Addresses)
 		if userEr != nil {
 			return userEr
@@ -60,7 +61,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 	if txErr != nil {
-		logger.Error("Failed in database transaction", zap.Error(txErr))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction", "error": txErr.Error()})
 		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
 		return
 	}
@@ -72,20 +73,19 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 	var payload models.RestaurantsRequest
-	logger := middlewares.LoggerContext(r)
+	loggers := logger.GetLogContext(r)
 	userCtx := middlewares.UserContext(r)
 	createdBy := userCtx.UserID
 
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
-		logger.Error("Payload cannot be parsed. Check the payload", zap.Error(err))
-
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction", "error": err.Error()})
 		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload cannot be parsed. Check the payload")
 		return
 	}
 
 	//Validator to check the payload's required fields
-	errMsg, isValid := utils.CheckValidation(payload, logger)
+	errMsg, isValid := utils.CheckValidation(r.Context(), payload, loggers)
 	if !isValid {
 		utils.ResponseWithError(w, http.StatusBadRequest, err, strings.Join(errMsg, "|"))
 		return
@@ -93,16 +93,16 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 
 	exist, err := dbHelper.IsRestaurantExists(payload.Name, payload.Address)
 	if err != nil {
-		logger.Error("Error while finding restaurant", zap.String("restaurant's name", fmt.Sprintf("%#v", payload.Name)), zap.Error(err))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Error while finding restaurant", "name in payload": payload.Name, "error": err.Error()})
 		utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding restaurant")
 		return
 	}
 	if exist {
-		logger.Error("Restaurant Already Exists", zap.String("restaurant's name", fmt.Sprintf("%#v", payload.Name)))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Restaurant Already Exists", "name in payload": payload.Name})
 		utils.ResponseWithError(w, http.StatusConflict, nil, "Restaurant Already Exists")
 	}
 
-	txErr := database.WithTxn(logger, func(tx *sqlx.Tx) error {
+	txErr := database.WithTxn(r.Context(), loggers, func(tx *sqlx.Tx) error {
 		_, resEr := dbHelper.CreateRestaurantHelper(tx, payload.Name, payload.Address, payload.Latitude, payload.Longitude, createdBy)
 		if resEr != nil {
 			return resEr
@@ -110,7 +110,7 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 	if txErr != nil {
-		logger.Error("Failed in database transaction. Error while finding restaurant", zap.String("restaurant's name", fmt.Sprintf("%#v", payload.Name)), zap.Error(txErr))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction. Error while creating restaurant", "name in payload": payload.Name, "error": txErr.Error()})
 		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed to add new Restaurant")
 		return
 	}
@@ -122,20 +122,20 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 
 func CreateDish(w http.ResponseWriter, r *http.Request) {
 	var payload models.DishRequest
-	logger := middlewares.LoggerContext(r)
+	loggers := logger.GetLogContext(r)
 	restaurantId := chi.URLParam(r, "restaurantId")
 	userCtx := middlewares.UserContext(r)
 	createdBy := userCtx.UserID
 
 	err := utils.ParsePayload(r.Body, &payload)
 	if err != nil {
-		logger.Error("Payload cannot be parsed. Check the payload", zap.Error(err))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Payload cannot be parsed. Check the payload", "error": err.Error()})
 		utils.ResponseWithError(w, http.StatusBadRequest, err, err.Error())
 		return
 	}
 
 	//Validator to check the payload's required fields
-	errMsg, isValid := utils.CheckValidation(payload, logger)
+	errMsg, isValid := utils.CheckValidation(r.Context(), payload, loggers)
 	if !isValid {
 		utils.ResponseWithError(w, http.StatusBadRequest, err, strings.Join(errMsg, "|"))
 		return
@@ -144,7 +144,7 @@ func CreateDish(w http.ResponseWriter, r *http.Request) {
 	//Check if restaurant is created by sub-admin
 	restExist, err := dbHelper.GetRestaurantById(restaurantId)
 	if err != nil {
-		logger.Error("Error while searching for restaurants", zap.Error(err))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Error while searching for restaurants", "name in payload": payload.Name, "error": err.Error()})
 		utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while searching for restaurants")
 		return
 	}
@@ -153,16 +153,16 @@ func CreateDish(w http.ResponseWriter, r *http.Request) {
 	if restExist.CreatedBy == createdBy || string(userCtx.Role) != roleCheck {
 		exist, err := dbHelper.IsDishExists(payload.Name, restaurantId)
 		if err != nil {
-			logger.Error("Error while finding dishes", zap.Error(err))
+			loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Error while finding dishes", "name in payload": payload.Name, "error": err.Error()})
 			utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding dishes")
 			return
 		}
 		if exist {
-			logger.Error("Dish Already Exists", zap.String("dish's name", fmt.Sprintf("%#v", payload.Name)))
+			loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Dish Already Exists", "name in payload": payload.Name})
 			utils.ResponseWithError(w, http.StatusConflict, nil, "Dish Already Exists")
 		}
 
-		txErr := database.WithTxn(logger, func(tx *sqlx.Tx) error {
+		txErr := database.WithTxn(r.Context(), loggers, func(tx *sqlx.Tx) error {
 			_, resEr := dbHelper.CreateDishHelper(tx, payload.Name, payload.Price, restaurantId)
 			if resEr != nil {
 				return resEr
@@ -170,7 +170,7 @@ func CreateDish(w http.ResponseWriter, r *http.Request) {
 			return nil
 		})
 		if txErr != nil {
-			logger.Error("Failed in database transaction. Failed to add new dish", zap.String("dish's name", fmt.Sprintf("%#v", payload.Name)), zap.Error(txErr))
+			loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction. Error while creating dish", "name in payload": payload.Name, "error": txErr.Error()})
 			utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed to add new Restaurant")
 			return
 		}
@@ -179,7 +179,59 @@ func CreateDish(w http.ResponseWriter, r *http.Request) {
 			"responseBody": fmt.Sprintf("Dish created with name %v", payload.Name),
 		})
 	} else {
-		logger.Error("Restaurant is forbidden for sub-admin or does not exist", zap.String("Issue", "restaurant Id in URL param is forbidden for sub-admin or does not exist"))
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Restaurant is forbidden for sub-admin or does not exist"})
 		utils.ResponseWithError(w, http.StatusBadRequest, errors.New("restaurant Id in URL param is forbidden for sub-admin or does not exist"), "Restaurant is forbidden for sub-admin or does not exist")
+	}
+}
+
+func AddAddressForUserByAdmins(w http.ResponseWriter, r *http.Request) {
+	var payload models.AddressData
+	userId := chi.URLParam(r, "userId")
+	loggers := logger.GetLogContext(r)
+	userCtx := middlewares.UserContext(r)
+	createdBy := userCtx.UserID
+	role := userCtx.Role
+
+	err := utils.ParsePayload(r.Body, &payload)
+	if err != nil {
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Payload cannot be parsed. Check the payload", "error": err.Error()})
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Payload cannot be parsed. Check the payload")
+		return
+	}
+
+	//Validator to check the payload's required fields
+	errMsg, isValid := utils.CheckValidation(r.Context(), payload, loggers)
+	if !isValid {
+		utils.ResponseWithError(w, http.StatusBadRequest, err, strings.Join(errMsg, "|"))
+		return
+	}
+
+	//Check if the user with the email exists in system or not
+	exist, err := dbHelper.IsAddressExists(payload.Address)
+	if err != nil {
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Error while finding address", "address in payload": payload.Address, "error": err.Error()})
+		utils.ResponseWithError(w, http.StatusBadRequest, err, "Error while finding address")
+		return
+	}
+	if exist {
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Address already Exists", "address in payload": payload.Address, "error": err.Error()})
+		utils.ResponseWithError(w, http.StatusConflict, nil, "Address already Exists")
+		return
+	}
+
+	txErr := database.WithTxn(r.Context(), loggers, func(tx *sqlx.Tx) error {
+		addressId, userEr := dbHelper.CreateAddressForUserHelper(tx, payload.Address, payload.Latitude, payload.Longitude, userId, createdBy, string(role))
+		if userEr != nil {
+			return userEr
+		}
+		utils.ResponseWithJson(w, http.StatusCreated, map[string]string{
+			"responseBody": fmt.Sprintf("Address added with Id: %v", addressId),
+		})
+		return nil
+	})
+	if txErr != nil {
+		loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Failed in database transaction. Error while adding address", "address in payload": payload.Address, "error": txErr.Error()})
+		utils.ResponseWithError(w, http.StatusInternalServerError, txErr, "Failed in database transaction")
+		return
 	}
 }

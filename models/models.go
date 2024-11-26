@@ -70,12 +70,12 @@ type SignUpWithRole struct {
 }
 
 type AddressData struct {
-	Id        *string  `json:"id"`
-	Address   string   `json:"address" validate:"required,AddressCheck"`
-	Latitude  *float64 `json:"latitude" validate:"omitnil,number"`
-	Longitude *float64 `json:"longitude" validate:"omitnil,number"`
-	UserId    *string  `json:"userId"`
-	CreatedAt *string  `json:"createdAt"`
+	Id        *string `json:"id"`
+	Address   string  `json:"address" validate:"required,AddressCheck"`
+	Latitude  float64 `json:"latitude" validate:"omitnil,number"`
+	Longitude float64 `json:"longitude" validate:"omitnil,number"`
+	UserId    *string `json:"userId"`
+	CreatedAt *string `json:"createdAt"`
 }
 
 type Restaurant struct {

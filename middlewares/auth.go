@@ -3,10 +3,9 @@ package middlewares
 import (
 	"context"
 	"errors"
+	"github.com/gauraveg/rmsapp/logger"
 	"net/http"
 	"os"
-
-	"go.uber.org/zap"
 
 	dbHelper "github.com/gauraveg/rmsapp/database/dbhelper"
 	"github.com/gauraveg/rmsapp/models"
@@ -21,14 +20,14 @@ const userContext userCon = "userContext"
 func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			logger := LoggerContext(r)
+			loggers := logger.GetLogContext(r)
 			tokenString := r.Header.Get("token")
 			if tokenString == "" {
-				logger.Error("No token provided")
+				loggers.ErrorWithContext(r.Context(), "No token provided")
 				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "token header missing")
 				return
 			}
-			logger.Info("Parsing JWT token")
+			loggers.InfoWithContext(r.Context(), "Parsing JWT token")
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				_, ok := token.Method.(*jwt.SigningMethodHMAC)
 				if !ok {
@@ -37,14 +36,14 @@ func Authenticate(next http.Handler) http.Handler {
 				return []byte(os.Getenv("JWT_SECRET_KEY")), nil
 			})
 			if err != nil || !token.Valid {
-				logger.Error("invalid token", zap.String("Token", tokenString))
+				loggers.ErrorWithContext(r.Context(), map[string]string{"message": "invalid token", "Token": tokenString})
 				utils.ResponseWithError(w, http.StatusUnauthorized, err, "invalid token")
 				return
 			}
 
 			claimValues, ok := token.Claims.(jwt.MapClaims)
 			if !ok || !token.Valid {
-				logger.Error("invalid token claims")
+				loggers.ErrorWithContext(r.Context(), map[string]string{"message": "invalid token claims", "Token": tokenString})
 				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "invalid token claims")
 				return
 			}
@@ -52,12 +51,12 @@ func Authenticate(next http.Handler) http.Handler {
 			sessionId := claimValues["sessionId"].(string)
 			userData, err := dbHelper.FetchUserDataBySessionId(sessionId)
 			if err != nil {
-				logger.Error("Failed to fetch User data using the sessionID", zap.String("sessionId", sessionId))
+				loggers.ErrorWithContext(r.Context(), map[string]string{"message": "failed to fetch User data using the sessionId", "sessionId": sessionId})
 				utils.ResponseWithError(w, http.StatusInternalServerError, err, "Failed to fetch User data using the sessionID")
 				return
 			}
 			if userData.ArchivedAt != nil {
-				logger.Error("Session is already expired", zap.String("sessionId", sessionId))
+				loggers.ErrorWithContext(r.Context(), map[string]string{"message": "Session is already expired", "sessionId": sessionId})
 				utils.ResponseWithError(w, http.StatusUnauthorized, nil, "Session is already expired")
 				return
 			}

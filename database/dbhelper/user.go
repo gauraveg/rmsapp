@@ -70,9 +70,16 @@ func CreateUserHelper(tx *sqlx.Tx, email, name, hashPwd, createdBy, role string,
 		sqlQuery = `insert into public.addresses (Id, address, latitude, longitude, userId) 
 						values ($1, $2, $3, $4, $5) returning Id;`
 
+		// todo remove queries from loop
 		for i := range address {
 			crtErr = tx.Get(&addressId, sqlQuery, uuid.New(), address[i].Address, address[i].Latitude, address[i].Longitude, userId)
 		}
+
+		//copyCount, err := pgx.CopyFrom(
+		//	pgx.Identifier{"people"},
+		//	[]string{"first_name", "last_name", "age"},
+		//	pgx.CopyFromRows(rows),
+		//)
 	}
 
 	return userId.String(), crtErr
@@ -144,4 +151,27 @@ func GetUserLatitudeAndLongitude(tx *sqlx.Tx, userId string) ([]models.Coordinat
 	coordinates := make([]models.Coordinates, 0)
 	err := tx.Select(&coordinates, sqlQuery, userId)
 	return coordinates, err
+}
+
+func IsAddressExists(address string) (bool, error) {
+	sqlQuery := `select count(Id) > 0 as isExists from public.addresses where address=$1 and archivedAt is null`
+	var exists bool
+	err := database.RmsDB.Get(&exists, sqlQuery, address)
+	return exists, err
+}
+
+func CreateAddressForUserHelper(tx *sqlx.Tx, address string, latitude, longitude float64, userId, createdBy, role string) (string, error) {
+	var addressId uuid.UUID
+	var crtErr error
+	if role == string(models.RoleUser) {
+		sqlQuery := `insert into public.addresses (Id, address, latitude, longitude, userId) 
+					values ($1, $2, $3, $4, $5) returning Id;`
+		crtErr = database.RmsDB.Get(&addressId, sqlQuery, uuid.New(), address, latitude, longitude, userId)
+	} else {
+		sqlQuery := `insert into public.addresses (Id, address, latitude, longitude, userId, createdAt) 
+					values ($1, $2, $3, $4, $5, $6) returning Id;`
+		crtErr = database.RmsDB.Get(&addressId, sqlQuery, uuid.New(), address, latitude, longitude, userId, createdBy)
+	}
+
+	return addressId.String(), crtErr
 }

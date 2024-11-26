@@ -1,9 +1,11 @@
 package database
 
 import (
+	"context"
+
+	"github.com/gauraveg/rmsapp/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 )
 
 var (
@@ -30,32 +32,32 @@ func ConnectDB(dbUrl string) error {
 	return nil
 }
 
-func WithTxn(logger *zap.Logger, fn TxFn) error {
+func WithTxn(ctx context.Context, loggers *logger.ZapLogger, fn TxFn) error {
 	tx, err := RmsDB.Beginx()
 	if err != nil {
-		logger.Error("Cannot begin database transaction")
+		loggers.ErrorWithContext(ctx, "Cannot begin database transaction")
 		return err
 	}
 
 	defer func() {
 		if err != nil {
-			logger.Info("Rolling back database transaction")
+			loggers.InfoWithContext(ctx, "Rolling back database transaction")
 			err := tx.Rollback()
 			if err != nil {
-				logger.Error("Cannot rollback database transaction")
+				loggers.ErrorWithContext(ctx, "Cannot rollback database transaction")
 				return
 			}
 		} else {
-			logger.Info("Committing database transaction")
+			loggers.InfoWithContext(ctx, "Committing database transaction")
 			err := tx.Commit()
 			if err != nil {
-				logger.Error("Cannot commit database transaction")
+				loggers.ErrorWithContext(ctx, "Cannot commit database transaction")
 				return
 			}
 		}
 	}()
 
-	logger.Info("Starting database transaction")
+	loggers.InfoWithContext(ctx, "Starting database transaction")
 	err = fn(tx)
 	return err
 }

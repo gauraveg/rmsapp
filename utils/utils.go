@@ -78,12 +78,6 @@ func GenerateJwt(userId, role, sessionId string) (string, error) {
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
 }
 
-func LogError(errMsg string, err error, key, value string) {
-	zap.L().Error(errMsg,
-		zap.Error(err),
-		zap.String(key, value))
-}
-
 func hsin(value float64) float64 {
 	return math.Pow(math.Sin(value/2), 2)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gauraveg/rmsapp/logger"
 	"net/http"
 
 	"github.com/gauraveg/rmsapp/models"
@@ -16,10 +17,10 @@ type Server struct {
 	server *http.Server
 }
 
-func RmsRouters() *Server {
+// todo to add swagger
+func RmsRouters(loggers *logger.ZapLogger) *Server {
 	mainRouter := chi.NewRouter()
-	mainRouter.Use(middlewares.Logger)
-	mainRouter.Use(middlewares.CommonMiddleware()...)
+	mainRouter.Use(middlewares.CommonMiddleware(loggers)...)
 
 	mainRouter.Route("/v1", func(v1 chi.Router) {
 		v1.Get("/check", func(w http.ResponseWriter, r *http.Request) {
@@ -39,9 +40,12 @@ func RmsRouters() *Server {
 				admin.Get("/get-sub-admins", handlers.GetSubAdminsByAdmin)
 				admin.Post("/create-user", handlers.CreateUser)
 				admin.Get("/get-users", handlers.GetUsersByAdmin)
+				admin.Route("/user/{userId}", func(userId chi.Router) {
+					userId.Post("/add-user-address", handlers.AddAddressForUserByAdmins)
+				})
 				admin.Post("/create-restaurant", handlers.CreateRestaurant)
 				admin.Get("/get-restaurants", handlers.GetRestaurantsByAdminAndUser)
-				admin.Route("/{restaurantId}", func(restId chi.Router) {
+				admin.Route("/restaurant/{restaurantId}", func(restId chi.Router) {
 					restId.Post("/create-dish", handlers.CreateDish)
 				})
 				admin.Get("/get-all-dishes", handlers.GetAllDishesByAdminAndUser)
@@ -51,9 +55,12 @@ func RmsRouters() *Server {
 				subAdmin.Use(middlewares.ShouldHaveRole(models.RoleSubAdmin))
 				subAdmin.Post("/create-user", handlers.CreateUser)
 				subAdmin.Get("/get-users", handlers.GetUsersBySubAdmin)
+				subAdmin.Route("/user/{userId}", func(userId chi.Router) {
+					userId.Post("/add-user-address", handlers.AddAddressForUserByAdmins)
+				})
 				subAdmin.Post("/create-restaurant", handlers.CreateRestaurant)
 				subAdmin.Get("/get-restaurants", handlers.GetRestaurantsBySubAdmin)
-				subAdmin.Route("/{restaurantId}", func(restId chi.Router) {
+				subAdmin.Route("/restaurant/{restaurantId}", func(restId chi.Router) {
 					restId.Post("/create-dish", handlers.CreateDish)
 				})
 				subAdmin.Get("/get-all-dishes", handlers.GetAllDishesBySubAdmin)
@@ -61,6 +68,9 @@ func RmsRouters() *Server {
 
 			router.Route("/user", func(user chi.Router) {
 				user.Use(middlewares.ShouldHaveRole(models.RoleUser))
+				// user.Route("/{userId}", func(userId chi.Router) {
+				// 	userId.Post("/add-user-address", handlers.AddAddressForUserByUser)
+				// })
 				user.Get("/get-all-restaurants", handlers.GetRestaurantsByAdminAndUser)
 				user.Get("/get-all-dishes", handlers.GetAllDishesByAdminAndUser)
 				user.Route("/{restaurantId}", func(restId chi.Router) {

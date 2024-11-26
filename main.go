@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"github.com/gauraveg/rmsapp/logger"
 	"os"
 
 	"github.com/gauraveg/rmsapp/database"
@@ -12,6 +12,7 @@ import (
 
 func main() {
 	//fmt.Println("Hello World")
+	loggers := logger.LogWrapperInit()
 	err := godotenv.Load()
 	if err != nil {
 		return
@@ -22,23 +23,23 @@ func main() {
 
 	err = database.ConnectDB(dbUrl)
 	if err != nil {
-		log.Printf("Failed to connect to database with error: %+v", err)
-		zap.L().Error("Failed to connect to database", zap.Error(err))
+		loggers.Info("Failed to connect to database with error: %+v", err)
+		loggers.Error("Failed to connect to database", zap.Error(err))
 		return
 	}
-	log.Printf("Db connection successful!")
+	loggers.Info("Db connection successful!")
 
-	srv := RmsRouters()
-	log.Printf("Server has started at PORT %v", port)
+	srv := RmsRouters(loggers)
+	loggers.Info("Server has started at PORT %v", port)
 	err = srv.Run(port)
 	if err != nil {
-		log.Printf("Failed to run server. Error: %v", err)
+		loggers.Error("Failed to run server. Error: %v", err)
 		return
 	}
 
 	err = database.ShutdownDatabase()
 	if err != nil {
-		log.Printf("failed to close database connection. Error: %v", err)
+		loggers.Error("failed to close database connection. Error: %v", err)
 		return
 	}
 }

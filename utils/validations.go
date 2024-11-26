@@ -1,11 +1,12 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
+	"github.com/gauraveg/rmsapp/logger"
 	"github.com/go-playground/validator/v10"
-	"go.uber.org/zap"
 )
 
 func AlphaNumRegexCheck(value string) bool {
@@ -23,15 +24,15 @@ func AlphaRegexCheck(value string) bool {
 // 	return isValid
 // }
 
-func CheckValidation(payload interface{}, logger *zap.Logger) ([]string, bool) {
+func CheckValidation(ctx context.Context, payload interface{}, loggers *logger.ZapLogger) ([]string, bool) {
 	validate := validator.New()
 	err := validate.RegisterValidation("UserNameCheck", CustomNameValidation)
 	if err != nil {
-		logger.Error(err.Error())
+		loggers.ErrorWithContext(ctx, err.Error())
 	}
 	err = validate.RegisterValidation("AddressCheck", CustomAddressValidation)
 	if err != nil {
-		logger.Error(err.Error())
+		loggers.ErrorWithContext(ctx, err.Error())
 	}
 	//err = validate.RegisterValidation("NumberCheck", CustomNumValidation)
 
@@ -43,59 +44,35 @@ func CheckValidation(payload interface{}, logger *zap.Logger) ([]string, bool) {
 			switch err.Field() {
 			case "Name":
 				msg = fmt.Sprintf("The value '%v' is incorrect for name", err.Value())
-				logger.Error("Name validation failed",
-					zap.String("Tag", err.Tag()),
-					zap.String("Type", err.Type().String()),
-					zap.String("Issue", msg))
+				loggers.ErrorWithContext(ctx, map[string]string{"message": "Name validation failed", "tag": err.Tag(), "type": err.Type().String(), "issue": msg})
 				errMsg = append(errMsg, msg)
 			case "Email":
 				msg = fmt.Sprintf("The value '%v' is incorrect for email", err.Value())
-				logger.Error("Email validation failed",
-					zap.String("Tag", err.Tag()),
-					zap.String("Type", err.Type().String()),
-					zap.String("Issue", msg))
+				loggers.ErrorWithContext(ctx, map[string]string{"message": "Email validation failed", "tag": err.Tag(), "type": err.Type().String(), "issue": msg})
 				errMsg = append(errMsg, msg)
 			case "Role":
 				msg = fmt.Sprintf("The value '%v' is incorrect. It should be either of these values %v", err.Value(), err.Param())
-				logger.Error("Role validation failed",
-					zap.String("Tag", err.Tag()),
-					zap.String("Type", err.Type().String()),
-					zap.String("Issue", msg))
+				loggers.ErrorWithContext(ctx, map[string]string{"message": "Role validation failed", "tag": err.Tag(), "type": err.Type().String(), "issue": msg})
 				errMsg = append(errMsg, msg)
 			case "Password":
 				msg = fmt.Sprintf("The length for password is incorrect. The length is %v", len(err.Value().(string)))
-				logger.Error("Password validation failed",
-					zap.String("Tag", err.Tag()),
-					zap.String("Type", err.Type().String()),
-					zap.String("Issue", msg))
+				loggers.ErrorWithContext(ctx, map[string]string{"message": "Password validation failed", "tag": err.Tag(), "type": err.Type().String(), "issue": msg})
 				errMsg = append(errMsg, msg)
 			case "Address":
 				msg = fmt.Sprintf("The value '%v' is incorrect for address", err.Value())
-				logger.Error("Address validation failed",
-					zap.String("Tag", err.Tag()),
-					zap.String("Type", err.Type().String()),
-					zap.String("Issue", msg))
+				loggers.ErrorWithContext(ctx, map[string]string{"message": "Address validation failed", "tag": err.Tag(), "type": err.Type().String(), "issue": msg})
 				errMsg = append(errMsg, msg)
 			case "Latitude":
 				msg = fmt.Sprintf("The value '%v' is incorrect for latitude", err.Value())
-				logger.Error("Latitude validation failed",
-					zap.String("Tag", err.Tag()),
-					zap.String("Type", err.Type().String()),
-					zap.String("Issue", msg))
+				loggers.ErrorWithContext(ctx, map[string]string{"message": "Latitude validation failed", "tag": err.Tag(), "type": err.Type().String(), "issue": msg})
 				errMsg = append(errMsg, msg)
 			case "Longitude":
 				msg = fmt.Sprintf("The value '%v' is incorrect for longitude", err.Value())
-				logger.Error("Longitude validation failed",
-					zap.String("Tag", err.Tag()),
-					zap.String("Type", err.Type().String()),
-					zap.String("Issue", msg))
+				loggers.ErrorWithContext(ctx, map[string]string{"message": "Longitude validation failed", "tag": err.Tag(), "type": err.Type().String(), "issue": msg})
 				errMsg = append(errMsg, msg)
 			case "Price":
 				msg = fmt.Sprintf("The value '%v' is incorrect for Price", err.Value())
-				logger.Error("Price validation failed",
-					zap.String("Tag", err.Tag()),
-					zap.String("Type", err.Type().String()),
-					zap.String("Issue", msg))
+				loggers.ErrorWithContext(ctx, map[string]string{"message": "Price validation failed", "tag": err.Tag(), "type": err.Type().String(), "issue": msg})
 				errMsg = append(errMsg, msg)
 			}
 		}
